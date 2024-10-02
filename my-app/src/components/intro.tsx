@@ -1,16 +1,28 @@
 "use client"
 
 import Image from 'next/image'
-import React from 'react'
+import React,{useEffect} from 'react'
 import ProfilePic from '../../public/me.png'
 import {motion} from "framer-motion"
 import Link from 'next/link'
 import { BsArrowRight, BsGithub, BsLinkedin } from 'react-icons/bs'
 import { HiDownload } from 'react-icons/hi'
+import { useInView } from 'react-intersection-observer'
+import { useActiveSectionContext } from '../../context/active-section'
 
 export default function Intro() {
+    const {ref,inView}=useInView({
+        threshold : 0.5
+      })
+    const {setActiveSection, timeOfLastClick} = useActiveSectionContext();
+    
+    useEffect(() => {
+      if (inView && Date.now() - timeOfLastClick > 1000) {
+        setActiveSection("Home")
+      }
+    },[inView, timeOfLastClick])
   return (
-    <section className='mb-28 max-w-[50rem] sm:mb-0'>
+    <section className='mb-28 max-w-[50rem] sm:mb-0 scroll-mt-[100rem]' id="home" ref={ref}>
         <div className='flex items-center justify-center'>
             <div className='relative'>
                 <motion.div
