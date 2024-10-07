@@ -3,20 +3,10 @@ import React,{useEffect} from 'react'
 import SectionHeading from './SectionHeading'
 import { projectsData } from '../../lib/data'
 import Project from "./Project"
-import { useInView } from 'react-intersection-observer'
-import { useActiveSectionContext } from '../../context/active-section'
+import { useSectionInView } from '../../lib/hooks'
 
 export default function Projects() {
-  const {ref,inView}=useInView({
-    threshold : 0.5
-  })
-  const {setActiveSection,timeOfLastClick} = useActiveSectionContext();
-  
-  useEffect(() => {
-    if (inView && Date.now() - timeOfLastClick > 1000) {
-      setActiveSection("Projects")
-    }
-  },[inView, timeOfLastClick])
+  const {ref} = useSectionInView("Projects",0.5)
 
   return (
     <section className='scroll-mt-28' id='projects' ref={ref}>
