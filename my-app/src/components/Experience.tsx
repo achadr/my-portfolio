@@ -1,6 +1,6 @@
 "use client"
 
-import React from 'react'
+import React, {useEffect,useState} from 'react'
 
 import SectionHeading from './SectionHeading'
 import {
@@ -13,16 +13,22 @@ import {
 //   import { useTheme } from "@/context/theme-context";
 
 export default function Experience() {
-    const {ref, inView} = useSectionInView("Experience",0.3)
+    const {ref, inView} = useSectionInView("Experience",0.55)
+    const [hasAnimated, setHasAnimated] = useState(false);
+
+
+
+    useEffect(() => { if (inView && !hasAnimated) { setHasAnimated(true); } }, [inView]);
+    console.log("in view", inView)
   return (
-    <section ref={ref} id='experience'>
+    <section ref={ref} id='experience' className='scroll-mt-28 mb-28 sm:mb-40 mt-5'>
         <SectionHeading>My Experience</SectionHeading>
-        <VerticalTimeline animate={inView} lineColor=''>
+        <VerticalTimeline  lineColor=''>
             {
                 experiencesData.map((experience,index) => (
                     <React.Fragment key={index}>
                         <VerticalTimelineElement
-                            visible={inView}
+                            visible={hasAnimated ? true : inView}
                             contentStyle={{
                                 background: "#f3f4f6",
                                 boxShadow: "none",
