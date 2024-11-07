@@ -3,10 +3,12 @@ import React from 'react'
 import SectionHeading from './SectionHeading'
 import { FaPaperPlane } from 'react-icons/fa'
 import { useSectionInView } from '../../lib/hooks'
+import { sendEmail } from '@/actions/sendEmail'
 
 export default function Contact() {
 
-    const {ref, inView} = useSectionInView("Contact")
+    const {ref} = useSectionInView("Contact")
+
 
   return (
     <section ref={ref} id="contact" className='mb-20 sm:mb-28 w-[min(100%,38rem)] text-center'>
@@ -17,9 +19,11 @@ export default function Contact() {
             or through this form.
         </p>
 
-        <form className='mt-10 flex flex-col'>
-            <input className='h-14 rounded-lg border border-black/10 px-4' type="email" placeholder='Your Email'/>
-            <textarea className='h-50 my-3 rounded-lg border border-black/10 p-4  active:scale-10 h-[10rem]' placeholder='Your message' />
+        <form className='mt-10 flex flex-col' action={async (formData) => {
+           await sendEmail(formData)
+        }}>
+            <input name='senderEmail' className='h-14 rounded-lg border border-black/10 px-4' type="email" placeholder='Your Email' required maxLength={500}/>
+            <textarea name='message' className='h-50 my-3 rounded-lg border border-black/10 p-4  active:scale-10 h-[10rem]' placeholder='Your message' required maxLength={5000} />
             <button type="submit" className='group flex focus:scale-105 hover:bg-gray-950 hover:scale-110 hover:cursor-pointer items-center justify-center gap-2 h-[3rem] w-[8rem] bg-gray-900 text-white rounded-full outline-none transition-all'>Submit 
                 <FaPaperPlane className='text-xs opacity-70 transition-all group-hover:translate-x-1 group-hover:-translate-y-1'/>{" "}
             </button>
