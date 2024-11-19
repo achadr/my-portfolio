@@ -47,7 +47,6 @@ export default function Experience() {
                         >
                             <h3 className='font-semibold capitalize'>
                                 {experience.title}
-                                "helllo"
                             </h3>
                             <p className='font-normal !mt-0'>
                                 {experience.location}
