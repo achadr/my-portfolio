@@ -11,6 +11,13 @@ export const sendEmail = async (formData : FormData) => {
     const senderEmail = formData.get('senderEmail')
     const message = formData.get('message')
 
+    // Check if API key is configured
+    if (!process.env.RESEND_API_KEY) {
+        return {
+            error: "Email service is not configured. Please contact the administrator."
+        }
+    }
+
     //server side validation
     if (!validateString(senderEmail, 500)) {
         return {
@@ -24,20 +31,33 @@ export const sendEmail = async (formData : FormData) => {
     }
 
 
+    let data;
     try{
-        await resend.emails.send({
-            from: "My portfolio Contact form <onboarding@resend.dev>",
-            to:'bougattaya.achraf@gmail.com',
-            subject: "Message from contact form",
+        const emailBody = `
+This email is from your portfolio contact form.
+
+Sender's Email: ${senderEmail}
+
+Message:
+${message}
+        `.trim();
+
+        data = await resend.emails.send({
+            from: "Portfolio Contact Form <onboarding@resend.dev>",
+            to: 'bougattaya.achraf@gmail.com',
+            subject: "New message from your portfolio contact form",
             replyTo: senderEmail as string,
-            text: message as string,
+            text: emailBody,
         })
     }
     catch (error: unknown) {
-
-
+        console.error('Error sending email:', error);
         return {
             error : getErrorMessage(error)
         }
+    }
+
+    return {
+        data,
     }
 }

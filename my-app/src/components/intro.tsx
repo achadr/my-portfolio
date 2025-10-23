@@ -74,9 +74,9 @@ export default function Intro() {
                 delay: 0.1
             }}
         >
-            <Link 
+            <Link
                 href="#contact"
-                className='group bg-gray-900 text-white px-7 py-3 flex items-center gap-2 rounded-full outline-none focus:scale-110 hover:scale-110 hover:bg-gra-950 active:scale-105 transition'
+                className='group bg-gray-900 text-white px-7 py-3 flex items-center gap-2 rounded-full outline-none focus:scale-110 hover:scale-110 hover:bg-gray-950 active:scale-105 transition'
                 onClick={()=> {
                     setActiveSection("Contact")
                     setTimeOfLastClick(Date.now())
@@ -92,11 +92,23 @@ export default function Intro() {
                 Download CV <HiDownload className='opacity-60 group-hover:translate-y-1 transition'/> 
             </a>
 
-            <a className='bg-white-700 p-4 flex items-center gap-2 rounded-full focus:scale-110 hover:scale-[1.15] hover:cursor-pointer active:scale-105 transition ' href="https://www.linkedin.com/in/achraf-bougattaya-747320177/" target="_blank">
-              <BsLinkedin/>  
+            <a
+                className='bg-white-700 p-4 flex items-center gap-2 rounded-full focus:scale-110 hover:scale-[1.15] hover:cursor-pointer active:scale-105 transition'
+                href="https://www.linkedin.com/in/achraf-bougattaya-747320177/"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Visit my LinkedIn profile"
+            >
+              <BsLinkedin/>
             </a>
-            <a className='bg-white-700 p-4 flex items-center gap-2 text-[1.35rem] rounded-full focus:scale-[1.15] hover:scale-110 hover:cursor-pointer active:scale-105 transition ' href="https://github.com/achadr?tab=repositories" target='_blank'>
-              <BsGithub/>  
+            <a
+                className='bg-white-700 p-4 flex items-center gap-2 text-[1.35rem] rounded-full focus:scale-[1.15] hover:scale-110 hover:cursor-pointer active:scale-105 transition'
+                href="https://github.com/achadr?tab=repositories"
+                target='_blank'
+                rel="noopener noreferrer"
+                aria-label="Visit my GitHub repositories"
+            >
+              <BsGithub/>
             </a>
         </motion.div>
     </section>

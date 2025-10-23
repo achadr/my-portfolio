@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import Header from "../components/Header";
 import ActiveSectionContextProvider from "../../context/active-section";
+import ToasterProvider from "../components/ToasterProvider";
 
 
 const geistSans = localFont({
@@ -18,7 +19,33 @@ const geistMono = localFont({
 
 export const metadata: Metadata = {
   title: "Achraf BOUGATTAYA | Personal Portfolio",
-  description: "Achraf is a front-end developper with 3 years of experience",
+  description: "Achraf is a front-end developer with 3 years of experience specializing in React, Next.js, and modern web technologies.",
+  keywords: ["Achraf BOUGATTAYA", "Front-end Developer", "React Developer", "Next.js", "Web Developer", "Portfolio"],
+  authors: [{ name: "Achraf BOUGATTAYA" }],
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://achrafbougattaya.com",
+    title: "Achraf BOUGATTAYA | Personal Portfolio",
+    description: "Front-end developer with 3 years of experience specializing in React, Next.js, and modern web technologies.",
+    siteName: "Achraf BOUGATTAYA Portfolio",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Achraf BOUGATTAYA | Personal Portfolio",
+    description: "Front-end developer with 3 years of experience specializing in React, Next.js, and modern web technologies.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: "#ffffff",
 };
 
 export default function RootLayout({
@@ -37,6 +64,7 @@ export default function RootLayout({
           <Header/>
           {children}
         </ActiveSectionContextProvider>
+        <ToasterProvider />
       </body>
     </html>
   );
