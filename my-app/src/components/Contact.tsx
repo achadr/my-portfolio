@@ -36,20 +36,26 @@ export default function Contact() {
                 form?.reset()
             }
         }}>
+            <label htmlFor="senderEmail" className="sr-only">Your Email Address</label>
             <input
+                id="senderEmail"
                 name='senderEmail'
                 className='h-14 rounded-lg border border-black/10 px-4 disabled:opacity-50 disabled:cursor-not-allowed'
                 type="email"
                 placeholder='Your Email'
                 required
+                aria-required="true"
                 maxLength={500}
                 disabled={pending}
             />
+            <label htmlFor="message" className="sr-only">Your Message</label>
             <textarea
+                id="message"
                 name='message'
                 className='h-50 my-3 rounded-lg border border-black/10 p-4 active:scale-10 h-[10rem] disabled:opacity-50 disabled:cursor-not-allowed'
                 placeholder='Your message'
                 required
+                aria-required="true"
                 maxLength={5000}
                 disabled={pending}
             />

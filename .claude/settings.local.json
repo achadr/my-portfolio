@@ -1,7 +1,16 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm audit fix:*)"
+      "Bash(npm audit fix:*)",
+      "Bash(npm outdated:*)",
+      "Bash(npm audit:*)",
+      "Bash(test:*)",
+      "Bash(git log:*)",
+      "Bash(git -C \"c:\\Users\\achra\\Desktop\\My-projects\\my-portfolio\" log --all --oneline --source -- \".env.local\" \"**/.env.local\")",
+      "Bash(find:*)",
+      "Bash(npm run build:*)",
+      "Read(//c/Users/achra/Desktop/My-projects/mcp-hub/**)",
+      "Read(//c/Users/achra/Desktop/My-projects/cv-maker/**)"
     ],
     "deny": [],
     "ask": []

@@ -3,5 +3,9 @@
 import { Toaster } from "react-hot-toast"
 
 export default function ToasterProvider() {
-  return <Toaster position="top-right" />
+  return (
+    <div suppressHydrationWarning>
+      <Toaster position="top-right" />
+    </div>
+  )
 }

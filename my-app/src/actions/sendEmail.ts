@@ -24,6 +24,14 @@ export const sendEmail = async (formData : FormData) => {
             error : "Invalid sender Email"
         }
     }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(senderEmail as string)) {
+        return {
+            error : "Please provide a valid email address"
+        }
+    }
     if (!validateString(message,5000)) {
         return {
             error : "Invalid message"
@@ -44,14 +52,16 @@ ${message}
 
         data = await resend.emails.send({
             from: "Portfolio Contact Form <onboarding@resend.dev>",
-            to: 'bougattaya.achraf@gmail.com',
+            to: process.env.RECIPIENT_EMAIL || 'bougattaya.achraf@gmail.com',
             subject: "New message from your portfolio contact form",
             replyTo: senderEmail as string,
             text: emailBody,
         })
     }
     catch (error: unknown) {
-        console.error('Error sending email:', error);
+        if (process.env.NODE_ENV === 'development') {
+            console.error('Error sending email:', error);
+        }
         return {
             error : getErrorMessage(error)
         }

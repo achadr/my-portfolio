@@ -18,7 +18,7 @@ export default function Experience() {
 
 
 
-    useEffect(() => { if (inView && !hasAnimated) { setHasAnimated(true); } }, [inView]);
+    useEffect(() => { if (inView && !hasAnimated) { setHasAnimated(true); } }, [inView, hasAnimated]);
   return (
     <section ref={ref} id='experience' className='scroll-mt-28 mb-28 sm:mb-40 mt-5'>
         <SectionHeading>My Experience</SectionHeading>

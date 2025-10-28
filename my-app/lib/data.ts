@@ -2,9 +2,9 @@ import React from "react";
 import { CgWorkAlt } from "react-icons/cg";
 import { FaReact } from "react-icons/fa";
 import { LuGraduationCap } from "react-icons/lu";
-import corpcommentImg from "../public/corpcomment.png";
-import rmtdevImg from "../public/rmtdev.png";
-import wordanalyticsImg from "../public/wordanalytics.png";
+import mcpHubImg from "../public/mcp-hub.png";
+import cvMakerImg from "../public/cv-maker.png";
+import cityAnalyzerImg from "../public/city-analyzer.png";
 
 export const links = [
   {
@@ -56,31 +56,34 @@ export const experiencesData = [
     description:
       "I occupied a front-end developer role working for Geotwin.My mission was developing and maintaining the Geotwin platform, the landing page project and also managing external developer and reviewing their commited code. My stack includes React, Gatsby, TypeScript, Ant design, DeckGL and arrangoDB. I'm also open to full-stack opportunities.",
     icon: React.createElement(FaReact),
-    date: "2021 - 2023",
+    date: "2021 - 2024",
   },
 ] as const;
 
 export const projectsData = [
   {
-    title: "CorpComment",
+    title: "MCP Hub",
     description:
-      "I worked as a full-stack developer on this startup project for 2 years. Users can give public feedback to companies.",
-    tags: ["React", "Next.js", "MongoDB", "Tailwind", "Prisma"],
-    imageUrl: corpcommentImg,
+      "A platform for discovering musician concerts and performances by location. Features event search, detailed performance information, and location-based filtering.",
+    tags: ["TypeScript", "React", "Express", "Vite", "Node.js"],
+    imageUrl: mcpHubImg,
+    url: "https://mcp-learning-hub.vercel.app/",
   },
   {
-    title: "rmtDev",
+    title: "CV Maker",
     description:
-      "Job board for remote developer jobs. I was the front-end developer. It has features like filtering, sorting and pagination.",
-    tags: ["React", "TypeScript", "Next.js", "Tailwind", "Redux"],
-    imageUrl: rmtdevImg,
+      "Professional resume builder with 8 customizable templates, live preview, and PDF export. Features auto-save, template customization, and localStorage persistence.",
+    tags: ["React", "Vite", "Tailwind", "Zustand", "PDF Renderer"],
+    imageUrl: cvMakerImg,
+    url: "https://cv-maker-xi-dun.vercel.app/",
   },
   {
-    title: "Word Analytics",
+    title: "City Analyzer",
     description:
-      "A public web app for quick analytics on text. It shows word count, character count and social media post limits.",
-    tags: ["React", "Next.js", "SQL", "Tailwind", "Framer"],
-    imageUrl: wordanalyticsImg,
+      "Interactive map visualization tool for analyzing city demographics and population data with drawing tools, geospatial analysis, and detailed charts.",
+    tags: ["React", "TypeScript", "Mapbox GL", "Recharts", "Turf.js"],
+    imageUrl: cityAnalyzerImg,
+    url: "https://city-analyzer.vercel.app/",
   },
 ] as const;
 

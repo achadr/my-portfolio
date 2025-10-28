@@ -12,7 +12,7 @@ import { useActiveSectionContext } from '../../context/active-section'
 
 export default function Intro() {
 
-    const {activeSection, setActiveSection, setTimeOfLastClick} = useActiveSectionContext();
+    const {setActiveSection, setTimeOfLastClick} = useActiveSectionContext();
     const {ref} = useSectionInView("Home",0.5)
 
   return (
@@ -39,7 +39,7 @@ export default function Intro() {
                     />
                 </motion.div>
                 
-                <motion.span 
+                <motion.span
                     className='text-4xl absolute bottom-0 right-0'
                     initial={{opacity: 0, scale: 0}}
                     animate={{opacity: 1, scale: 1}}
@@ -49,6 +49,8 @@ export default function Intro() {
                         delay: 0.15,
                         duration : 0.9
                     }}
+                    role="img"
+                    aria-label="Waving hand"
                 >
                     👋
                 </motion.span>
@@ -59,7 +61,7 @@ export default function Intro() {
             initial={{ opacity:0, y: 100}}
             animate={{ opacity:1, y: 0}}
             >
-        <span className="font-bold">Hello, I'm Achraf.</span> I'm a{" "}
+        <span className="font-bold">Hello, I&apos;m Achraf.</span> I&apos;m a{" "}
         <span className="font-bold">front-end developer</span> with{" "}
         <span className="font-bold">3 years</span> of experience. I enjoy
         building <span className="italic">sites & apps</span>. My main focus is{" "}
@@ -84,9 +86,9 @@ export default function Intro() {
                 >
                     Contact me Here <BsArrowRight className='opacity-70 group-hover:translate-x-2 transition'/>
             </Link>
-            <a 
+            <a
                 className='group bg-white px-7 py-3 flex items-center gap-2 rounded-full focus:scale-110 hover:scale-110 hover:cursor-pointer active:scale-105 transition border border-black/10'
-                href="/CV_BOUGATTAYA_Achraf.pdf"
+                href="/Achraf-bougattaya-cv_en.pdf"
                 download
                 >
                 Download CV <HiDownload className='opacity-60 group-hover:translate-y-1 transition'/> 

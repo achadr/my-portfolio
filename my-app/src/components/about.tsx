@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect } from 'react'
+import React from 'react'
 import SectionHeading from './SectionHeading'
 import {motion} from "framer-motion"
 import { useSectionInView } from '../../lib/hooks'
@@ -28,7 +28,7 @@ export default function About() {
                 I am also familliar with developing Maps related components using DeckGL
             </p>
             <p>
-                Apart from coding and web developement. I am a big fan of videos games. I love everything related to the cosmos and I adore music, recently I'm learning to play guitar, it's my favourite instrument
+                Apart from coding and web developement. I am a big fan of videos games. I love everything related to the cosmos and I adore music, recently I&apos;m learning to play guitar, it&apos;s my favourite instrument
             </p>
     </motion.section>
     
