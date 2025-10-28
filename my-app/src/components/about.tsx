@@ -20,15 +20,15 @@ export default function About() {
         >
             <SectionHeading> About me</SectionHeading>
             <p className='mb-3'>
-                After guaduating with a degree of software engineering, I decided to start a carriere in front-end developement, while also having an eye on the back-end and data bases technologies.
-                I love problem solving aspect, it gives me the highest ammount of dopamine each day. The feeling of figuring out a solution to a problem is my favourite part of programming.
+                After graduating with a degree in software engineering, I decided to start a career in front-end development, while also keeping an eye on back-end and database technologies.
+                I love the problem-solving aspect—it gives me the highest amount of dopamine each day. The feeling of figuring out a solution to a problem is my favorite part of programming.
 
-                My core stack is React, Node.js, Javascript/Typescript, MongoDB
+                My core stack is React, Node.js, JavaScript/TypeScript, and MongoDB.
 
-                I am also familliar with developing Maps related components using DeckGL
+                I am also familiar with developing map-related components using DeckGL.
             </p>
             <p>
-                Apart from coding and web developement. I am a big fan of videos games. I love everything related to the cosmos and I adore music, recently I&apos;m learning to play guitar, it&apos;s my favourite instrument
+                Apart from coding and web development, I am a big fan of video games. I love everything related to the cosmos and I adore music. Recently I&apos;m learning to play guitar—it&apos;s my favorite instrument.
             </p>
     </motion.section>
     

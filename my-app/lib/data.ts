@@ -44,9 +44,9 @@ export const experiencesData = [
   },
   {
     title: "Front-End Developer internships",
-    location: "Ile-de-france",
+    location: "Ile-de-France",
     description:
-      "I worked as a front-end developer for 1 years, 6 months at Orange, building an internal user interface for managers. And other 6 months as a full stack developer building a POC about managing Data using a pipeline for Datascio.",
+      "I worked as a front-end developer for 1 year: 6 months at Orange, building an internal user interface for managers, and another 6 months as a full-stack developer building a POC for managing data using a pipeline for Datascio.",
     icon: React.createElement(CgWorkAlt),
     date: "2019 - 2020",
   },
@@ -54,7 +54,7 @@ export const experiencesData = [
     title: "Front-end developer",
     location: "Paris",
     description:
-      "I occupied a front-end developer role working for Geotwin.My mission was developing and maintaining the Geotwin platform, the landing page project and also managing external developer and reviewing their commited code. My stack includes React, Gatsby, TypeScript, Ant design, DeckGL and arrangoDB. I'm also open to full-stack opportunities.",
+      "I worked as a front-end developer for Geotwin. My mission was developing and maintaining the Geotwin platform, the landing page project, and managing external developers while reviewing their committed code. My stack includes React, Gatsby, TypeScript, Ant Design, DeckGL, and ArangoDB. I'm also open to full-stack opportunities.",
     icon: React.createElement(FaReact),
     date: "2021 - 2024",
   },
