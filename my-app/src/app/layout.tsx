@@ -4,6 +4,7 @@ import "./globals.css";
 import Header from "../components/Header";
 import ActiveSectionContextProvider from "../../context/active-section";
 import ToasterProvider from "../components/ToasterProvider";
+import AnimatedBackground from "../components/AnimatedBackground";
 
 
 const geistSans = localFont({
@@ -58,14 +59,13 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50 text-gray-950 pt-28 sm:pt-36`}
       >
+        <AnimatedBackground />
         <a
           href="#home"
           className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[1000] focus:bg-gray-900 focus:text-white focus:px-4 focus:py-2 focus:rounded-md"
         >
           Skip to main content
         </a>
-        <div className="bg-[#fbe2e3] absolute -z-10 top-[-1rem] right-[11rem] h-[31.25rem] w-[31.25rem] rounded-full blur-[10rem] sm:w-[68.75rem]" aria-hidden="true"></div>
-        <div className="bg-[#dbd7fb] absolute -z-10 top-[-6rem] left-[-35rem] h-[31.25rem] w-[50rem] rounded-full blur-[10rem] sm:w-[68.75rem] md:left-[-28rem] xl:left-[-15rem] 2xl:left-[-5rem]" aria-hidden="true"></div>
         <ActiveSectionContextProvider>
           <Header/>
           {children}

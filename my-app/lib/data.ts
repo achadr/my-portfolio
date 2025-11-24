@@ -35,12 +35,20 @@ export const links = [
 
 export const experiencesData = [
   {
-    title: "Graduated INPT, IAE Rouen",
-    location: "Rabat, Rouen",
+    title: "Freelance Full-Stack Developer",
+    location: "France",
     description:
-      "I obtained my engineering degree",
-    icon: React.createElement(LuGraduationCap),
-    date: "2019",
+      "Working as a freelance full-stack developer, designing and building modern web applications for clients from brief to production. Implementing React/TypeScript frontends with component libraries and responsive design. Developing Node.js APIs and integrations (REST/GraphQL), automating testing and CI/CD. Building interactive maps and dashboards with data visualization libraries.",
+    icon: React.createElement(FaReact),
+    date: "2025 - Present",
+  },
+  {
+    title: "Front-end developer",
+    location: "Paris",
+    description:
+      "I worked as a front-end developer for Geotwin. My mission was developing and maintaining the Geotwin platform, the landing page project, and managing external developers while reviewing their committed code. My stack includes React, Gatsby, TypeScript, Ant Design, DeckGL, and ArangoDB. I'm also open to full-stack opportunities.",
+    icon: React.createElement(FaReact),
+    date: "2021 - 2024",
   },
   {
     title: "Front-End Developer internships",
@@ -51,12 +59,12 @@ export const experiencesData = [
     date: "2019 - 2020",
   },
   {
-    title: "Front-end developer",
-    location: "Paris",
+    title: "Graduated INPT, IAE Rouen",
+    location: "Rabat, Rouen",
     description:
-      "I worked as a front-end developer for Geotwin. My mission was developing and maintaining the Geotwin platform, the landing page project, and managing external developers while reviewing their committed code. My stack includes React, Gatsby, TypeScript, Ant Design, DeckGL, and ArangoDB. I'm also open to full-stack opportunities.",
-    icon: React.createElement(FaReact),
-    date: "2021 - 2024",
+      "I obtained my engineering degree",
+    icon: React.createElement(LuGraduationCap),
+    date: "2019",
   },
 ] as const;
 
