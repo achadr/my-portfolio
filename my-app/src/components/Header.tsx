@@ -30,13 +30,13 @@ export default function Header() {
                 animate = {{y:0, opacity: 1}}
                 >
                   <Link
-                      className={clsx("flex w-full items-center justify-center px-3 py-3 hover:text-gray-950 transition focus:outline-none focus:ring-2 focus:ring-gray-950 focus:ring-offset-2 rounded-md",{"text-gray-950": activeSection == link.name })}
+                      className={clsx("flex w-full items-center justify-center px-3 py-3 hover:text-gray-950 transition focus:outline-none rounded-md",{"text-gray-950": activeSection == link.name })}
                       href={link.hash}
                       onClick={()=> {
                         setActiveSection(link.name)
                         setTimeOfLastClick(Date.now())
                       }}
-                      
+
                       >
                   {
                     link.name
