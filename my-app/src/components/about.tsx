@@ -20,15 +20,13 @@ export default function About() {
         >
             <SectionHeading> About me</SectionHeading>
             <p className='mb-3'>
-                After graduating with a degree in software engineering, I decided to start a career in front-end development, while also keeping an eye on back-end and database technologies.
-                I love the problem-solving aspect—it gives me the highest amount of dopamine each day. The feeling of figuring out a solution to a problem is my favorite part of programming.
-
-                My core stack is React, Node.js, JavaScript/TypeScript, and MongoDB.
-
-                I am also familiar with developing map-related components using DeckGL.
+                After earning my software engineering degree, I dove into front-end development—and haven&apos;t looked back. Over the past 3 years, I&apos;ve built everything from internal management tools to geospatial platforms, with React and TypeScript as my weapons of choice.
+            </p>
+            <p className='mb-3'>
+                Here&apos;s what gets me excited: that moment when a complex problem finally clicks. It&apos;s like solving a puzzle where the reward is clean, working code. My stack centers around React, Node.js, TypeScript, and MongoDB, with a special focus on map visualizations using DeckGL.
             </p>
             <p>
-                Apart from coding and web development, I am a big fan of video games. I love everything related to the cosmos and I adore music. Recently I&apos;m learning to play guitar—it&apos;s my favorite instrument.
+                Outside the code editor, I&apos;m fascinated by the cosmos, competitive in video games, and currently on a mission to master guitar. These passions fuel my creativity and keep my problem-solving skills sharp.
             </p>
     </motion.section>
     
