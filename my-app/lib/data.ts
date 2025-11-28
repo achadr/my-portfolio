@@ -5,6 +5,7 @@ import { LuGraduationCap } from "react-icons/lu";
 import mcpHubImg from "../public/mcp-hub.png";
 import cvMakerImg from "../public/cv-maker.png";
 import cityAnalyzerImg from "../public/city-analyzer.png";
+import gitInsightsImg from "../public/git-insights.png";
 
 export const links = [
   {
@@ -69,6 +70,14 @@ export const experiencesData = [
 ] as const;
 
 export const projectsData = [
+  {
+    title: "GitInsights",
+    description:
+      "AI-powered repository analysis dashboard providing insights about code quality, security, and performance with intelligent file analysis and detailed reporting.",
+    tags: ["React", "Node.js", "Express", "Claude AI", "Recharts", "Tailwind"],
+    imageUrl: gitInsightsImg,
+    url: "https://git-insights-frontend.vercel.app/",
+  },
   {
     title: "MCP Hub",
     description:
