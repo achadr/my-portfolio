@@ -20,8 +20,8 @@ const geistMono = localFont({
 
 export const metadata: Metadata = {
   title: "Achraf BOUGATTAYA | Personal Portfolio",
-  description: "Achraf is a front-end developer with 3 years of experience specializing in React, Next.js, and modern web technologies.",
-  keywords: ["Achraf BOUGATTAYA", "Front-end Developer", "React Developer", "Next.js", "Web Developer", "Portfolio"],
+  description: "Achraf is a front-end developer with 4+ years of experience specializing in React,Node.js, Next.js, and modern web technologies.",
+  keywords: ["Achraf BOUGATTAYA", "Front-end Developer", "React Developer", "Next.js","Node.js", "Web Developer", "Portfolio"],
   authors: [{ name: "Achraf BOUGATTAYA" }],
   openGraph: {
     type: "website",
