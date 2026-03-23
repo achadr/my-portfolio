@@ -28,13 +28,13 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: "https://achrafbougattaya.com",
     title: "Achraf BOUGATTAYA | Personal Portfolio",
-    description: "Front-end developer with 3 years of experience specializing in React, Next.js, and modern web technologies.",
+    description: "Front-end developer with 4+ years of experience specializing in React, Next.js, and modern web technologies.",
     siteName: "Achraf BOUGATTAYA Portfolio",
   },
   twitter: {
     card: "summary_large_image",
     title: "Achraf BOUGATTAYA | Personal Portfolio",
-    description: "Front-end developer with 3 years of experience specializing in React, Next.js, and modern web technologies.",
+    description: "Front-end developer with 4+ years of experience specializing in React, Next.js, and modern web technologies.",
   },
   robots: {
     index: true,

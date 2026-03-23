@@ -20,7 +20,7 @@ export default function About() {
         >
             <SectionHeading> About me</SectionHeading>
             <p className='mb-3'>
-                After earning my software engineering degree, I dove into front-end development—and haven&apos;t looked back. Over the past 3 years, I&apos;ve built everything from internal management tools to geospatial platforms, with React and TypeScript as my weapons of choice.
+                After earning my software engineering degree, I dove into front-end development—and haven&apos;t looked back. Over the past 4+ years, I&apos;ve built everything from internal management tools to geospatial platforms, with React and TypeScript as my weapons of choice.
             </p>
             <p className='mb-3'>
                 Here&apos;s what gets me excited: that moment when a complex problem finally clicks. It&apos;s like solving a puzzle where the reward is clean, working code. My stack centers around React, Node.js, TypeScript, and MongoDB, with a special focus on map visualizations using DeckGL.
