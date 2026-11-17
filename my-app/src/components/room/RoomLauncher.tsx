@@ -13,6 +13,7 @@ const SECTION_NAME = {
     projects: 'Projects',
     skills: 'Skills',
     experience: 'Experience',
+    contact: 'Contact',
 } as const
 
 /**

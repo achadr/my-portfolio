@@ -6,7 +6,7 @@ import { careerPath } from '../../../lib/content'
 import { projectsData } from '../../../lib/data'
 import { LAND, project } from '../../../lib/geo'
 
-export type RoomTarget = 'projects' | 'skills' | 'career' | 'guitar' | 'cosmos' | 'games'
+export type RoomTarget = 'projects' | 'skills' | 'career' | 'contact' | 'guitar' | 'cosmos' | 'games'
 type V3 = [number, number, number]
 
 /** Camera positions: where to stand and what to look at for each object. */
@@ -18,6 +18,7 @@ const PRESETS: Record<'home' | RoomTarget, { pos: V3; look: V3 }> = {
     guitar: { pos: [-2.7, 2.45, 1.3], look: [-3, 2.2, -3.9] },
     cosmos: { pos: [-2.1, 2.1, 2.0], look: [-3.9, 1.6, 0.2] },
     games: { pos: [1.8, 2.1, 0.6], look: [1.3, 1.2, -2.3] },
+    contact: { pos: [1.0, 2.25, 0.0], look: [0.75, 1.1, -2.1] },
 }
 const HOME_NARROW: V3 = [8.8, 6.4, 9.8]
 
@@ -28,6 +29,7 @@ const HOTSPOTS: Array<{ id: RoomTarget; label: string; pos: V3 }> = [
     { id: 'guitar', label: 'Guitar', pos: [-3, 3.3, -3.8] },
     { id: 'cosmos', label: 'Cosmos', pos: [-3.8, 2.4, 0.3] },
     { id: 'games', label: 'Games', pos: [1.3, 1.9, -2.3] },
+    { id: 'contact', label: 'Contact', pos: [0.6, 1.55, -1.95] },
 ]
 
 const PROJECT_COLORS = ['#7a8cff', '#ff8f6b', '#5fd6b0', '#e4b5ff']
@@ -225,6 +227,38 @@ function Guitar() {
             {[0, 1, 2, 3, 4, 5].map((i) => (
                 <Rod key={i} a={[-0.1 + i * 0.04, -0.49, 0.172]} b={[-0.055 + i * 0.022, 2.38, 0.148]} r={0.0035} color="#e8e6f2" />
             ))}
+        </group>
+    )
+}
+
+/* ---------- the envelope (contact) ---------- */
+
+/** A sealed letter with a stamp, lying on the desk. Opens the contact form. */
+function Envelope() {
+    const flap = useMemo(() => {
+        const s = new THREE.Shape()
+        s.moveTo(-0.21, 0.14)
+        s.lineTo(0.21, 0.14)
+        s.lineTo(0, 0)
+        s.closePath()
+        return s
+    }, [])
+    return (
+        <group position={[0.75, 1.106, -2.1]} rotation={[0, 0.25, 0]} scale={1.25}>
+            <B size={[0.42, 0.012, 0.28]} pos={[0, 0.006, 0]} color="#f4efe0" rough={0.8} />
+            {/* flap (the triangle pointing at the viewer) */}
+            <mesh position={[0, 0.0135, 0]} rotation={[-Math.PI / 2, 0, 0]} castShadow>
+                <shapeGeometry args={[flap]} />
+                <meshStandardMaterial color="#e3dac1" roughness={0.8} />
+            </mesh>
+            {/* wax seal */}
+            <Cyl r1={0.025} r2={0.028} h={0.006} pos={[0, 0.0165, 0.005]} color="#c0392b" rough={0.4} seg={20} />
+            {/* stamp, top right of the back would be hidden, so it sits on the visible corner */}
+            <B size={[0.06, 0.004, 0.075]} pos={[0.14, 0.014, 0.085]} rot={[0, 0.08, 0]} color="#ff8f6b" rough={0.6} shadow={false} />
+            <B size={[0.04, 0.0045, 0.05]} pos={[0.14, 0.0145, 0.085]} rot={[0, 0.08, 0]} color="#fff4e6" rough={0.6} shadow={false} />
+            {/* address lines */}
+            <B size={[0.17, 0.0035, 0.007]} pos={[-0.06, 0.014, 0.075]} color="#3b3a55" rough={0.9} shadow={false} />
+            <B size={[0.13, 0.0035, 0.007]} pos={[-0.08, 0.014, 0.1]} color="#3b3a55" rough={0.9} shadow={false} />
         </group>
     )
 }
@@ -490,6 +524,12 @@ function Room({ api }: { api: Api }) {
                 {([[1.45, -2.3, '#ff8f6b'], [1.55, -2.35, '#5fd6b0'], [1.35, -2.38, '#7a8cff']] as Array<[number, number, string]>).map(([x, z, c]) => (
                     <Sph key={c} r={0.03} pos={[x, 1.25, z]} color={c} />
                 ))}
+            </Interactive>
+
+            {/* envelope = contact */}
+            <Interactive id="contact" api={api}>
+                <Hit pos={[0.75, 1.15, -2.1]} r={0.55} />
+                <Envelope />
             </Interactive>
 
             {/* desk lamp */}

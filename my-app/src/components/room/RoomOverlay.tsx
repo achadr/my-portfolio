@@ -5,8 +5,11 @@ import type { RoomTarget } from './RoomScene'
 import ProjectsPanel from './ProjectsPanel'
 import SkillsTree from '../SkillsTree'
 import CareerMap from '../CareerMap'
+import ContactForm from '../ContactForm'
+import clsx from 'clsx'
 import { useFocus } from '../../../context/focus'
 import type { SkillName } from '../../../lib/content'
+import { CONTACT_EMAIL } from '../../../lib/contact'
 
 // The 3D scene (three.js) is only downloaded when the room is opened.
 const RoomScene = dynamic(() => import('./RoomScene'), {
@@ -19,23 +22,26 @@ const RoomScene = dynamic(() => import('./RoomScene'), {
 })
 
 /** Sections of the regular page, used by the "open on the page" escape hatch. */
-export type SectionId = 'projects' | 'skills' | 'experience'
-type PanelId = 'projects' | 'skills' | 'career'
+export type SectionId = 'projects' | 'skills' | 'experience' | 'contact'
+type PanelId = 'projects' | 'skills' | 'career' | 'contact'
 
 const PANEL_OF: Partial<Record<RoomTarget, PanelId>> = {
     projects: 'projects',
     skills: 'skills',
     career: 'career',
+    contact: 'contact',
 }
 const SECTION_OF_PANEL: Record<PanelId, SectionId> = {
     projects: 'projects',
     skills: 'skills',
     career: 'experience',
+    contact: 'contact',
 }
 const PANEL_TITLE: Record<PanelId, { title: string; object: string }> = {
     projects: { title: 'My projects', object: 'Monitor' },
     skills: { title: 'My skills', object: 'Laptop' },
     career: { title: 'My career', object: 'Wall map' },
+    contact: { title: 'Contact me', object: 'Letter' },
 }
 
 const HOBBIES: Partial<Record<RoomTarget, { title: string; text: string }>> = {
@@ -48,6 +54,7 @@ const LINKS: Array<{ id: PanelId; label: string; hint: string }> = [
     { id: 'projects', label: 'Projects', hint: 'Four applications, online' },
     { id: 'skills', label: 'Skills', hint: 'An interactive skill tree' },
     { id: 'career', label: 'Career', hint: 'A map and a timeline of my path' },
+    { id: 'contact', label: 'Contact', hint: 'Send me a message' },
 ]
 
 function webglAvailable() {
@@ -74,6 +81,7 @@ export default function RoomOverlay({ onClose, onNavigate }: Props) {
     const [focus, setFocus] = useState<RoomTarget | null>(null)
     const [panel, setPanel] = useState<PanelId | null>(null)
     const [selectedSkill, setSelectedSkill] = useState<SkillName | null>(null)
+    const [contactMounted, setContactMounted] = useState(false)
     const [careerJump, setCareerJump] = useState<{ index: number; n: number } | null>(null)
     const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -119,6 +127,16 @@ export default function RoomOverlay({ onClose, onNavigate }: Props) {
         return () => {
             cancelled = true
         }
+    }, [panel])
+
+    // Keep the contact form alive after its first opening: closing the panel must not throw a typed message away.
+    useEffect(() => {
+        if (panel !== 'contact') return
+        setContactMounted(true)
+        const id = setTimeout(() => {
+            panelRef.current?.querySelector<HTMLInputElement>('input[type="email"]')?.focus()
+        }, 80)
+        return () => clearTimeout(id)
     }, [panel])
 
     // The skill tree and the career map point at each other through the shared focus context.
@@ -170,7 +188,7 @@ export default function RoomOverlay({ onClose, onNavigate }: Props) {
                 else onClose()
             } else if (e.key === 'Tab') {
                 const nodes = rootRef.current?.querySelectorAll<HTMLElement>(
-                    'button:not([disabled]), a[href], input, [role="button"][tabindex]:not([tabindex="-1"])'
+                    'button:not([disabled]), a[href], input:not([tabindex="-1"]), textarea, [role="button"][tabindex]:not([tabindex="-1"])'
                 )
                 if (!nodes || nodes.length === 0) return
                 const visible = Array.from(nodes).filter((n) => n.offsetParent !== null || n === document.activeElement)
@@ -269,12 +287,15 @@ export default function RoomOverlay({ onClose, onNavigate }: Props) {
             )}
 
             {/* a section of my profile, opened from an object of the room */}
-            {panel && (
+            {(panel || contactMounted) && (
                 <div
                     ref={panelRef}
                     role="region"
-                    aria-label={PANEL_TITLE[panel].title}
-                    className="absolute inset-x-3 bottom-3 top-14 z-20 mx-auto flex max-w-[64rem] flex-col overflow-hidden rounded-2xl bg-white text-gray-950 shadow-2xl"
+                    aria-label={PANEL_TITLE[panel ?? 'contact'].title}
+                    className={clsx(
+                        'absolute inset-x-3 bottom-3 top-14 z-20 mx-auto flex max-w-[64rem] flex-col overflow-hidden rounded-2xl bg-white text-gray-950 shadow-2xl',
+                        !panel && 'hidden'
+                    )}
                 >
                     <div className="flex items-center justify-between gap-3 border-b border-black/10 bg-gray-50 px-4 py-3">
                         <div className="flex items-center gap-3">
@@ -285,12 +306,12 @@ export default function RoomOverlay({ onClose, onNavigate }: Props) {
                             >
                                 ← Back to the room
                             </button>
-                            <h2 className="text-lg font-semibold">{PANEL_TITLE[panel].title}</h2>
-                            <span className="hidden text-sm text-gray-600 sm:inline">· {PANEL_TITLE[panel].object}</span>
+                            <h2 className="text-lg font-semibold">{PANEL_TITLE[panel ?? 'contact'].title}</h2>
+                            <span className="hidden text-sm text-gray-600 sm:inline">· {PANEL_TITLE[panel ?? 'contact'].object}</span>
                         </div>
                         <button
                             type="button"
-                            onClick={() => onNavigate(SECTION_OF_PANEL[panel])}
+                            onClick={() => onNavigate(SECTION_OF_PANEL[panel ?? 'contact'])}
                             className="rounded-full px-3 py-1.5 text-sm text-gray-700 underline underline-offset-2 hover:text-gray-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-gray-900"
                         >
                             See it on the page ↗
@@ -306,6 +327,20 @@ export default function RoomOverlay({ onClose, onNavigate }: Props) {
                             </div>
                         )}
                         {panel === 'career' && <CareerMap jumpTo={careerJump} />}
+                        {contactMounted && (
+                            <div className={clsx('mx-auto max-w-[34rem] text-center', panel !== 'contact' && 'hidden')}>
+                                <p className="text-gray-700">
+                                    Please contact me directly at{' '}
+                                    <a className="underline" href={`mailto:${CONTACT_EMAIL}`}>
+                                        {CONTACT_EMAIL}
+                                    </a>{' '}
+                                    or through this form.
+                                </p>
+                                <div className="mt-6 text-left">
+                                    <ContactForm />
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
