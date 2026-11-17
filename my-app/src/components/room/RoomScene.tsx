@@ -1,0 +1,621 @@
+"use client"
+import React, { useEffect, useMemo, useRef, useState } from 'react'
+import * as THREE from 'three'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
+import { careerPath } from '../../../lib/content'
+import { projectsData } from '../../../lib/data'
+import { LAND, project } from '../../../lib/geo'
+
+export type RoomTarget = 'projects' | 'skills' | 'career' | 'guitar' | 'cosmos' | 'games'
+type V3 = [number, number, number]
+
+/** Camera positions: where to stand and what to look at for each object. */
+const PRESETS: Record<'home' | RoomTarget, { pos: V3; look: V3 }> = {
+    home: { pos: [6.4, 5, 7.4], look: [0, 1.9, -1.6] },
+    projects: { pos: [0.8, 2.4, 0.6], look: [-0.3, 1.95, -3.1] },
+    skills: { pos: [-1.2, 2.3, 0.9], look: [-1.6, 1.3, -2.5] },
+    career: { pos: [3.1, 3.2, 0.9], look: [3.1, 3.2, -3.95] },
+    guitar: { pos: [-2.4, 2.6, 0.2], look: [-3, 2.2, -3.9] },
+    cosmos: { pos: [-2.1, 2.1, 2.0], look: [-3.9, 1.6, 0.2] },
+    games: { pos: [1.8, 2.1, 0.6], look: [1.3, 1.2, -2.3] },
+}
+const HOME_NARROW: V3 = [8.8, 6.4, 9.8]
+
+const HOTSPOTS: Array<{ id: RoomTarget; label: string; pos: V3 }> = [
+    { id: 'projects', label: 'Projects', pos: [-0.3, 2.75, -3.1] },
+    { id: 'skills', label: 'Skills', pos: [-1.6, 2.1, -2.5] },
+    { id: 'career', label: 'Career', pos: [3.1, 4.3, -3.9] },
+    { id: 'guitar', label: 'Guitar', pos: [-3, 2.9, -3.8] },
+    { id: 'cosmos', label: 'Cosmos', pos: [-3.8, 2.4, 0.3] },
+    { id: 'games', label: 'Games', pos: [1.3, 1.9, -2.3] },
+]
+
+const PROJECT_COLORS = ['#7a8cff', '#ff8f6b', '#5fd6b0', '#e4b5ff']
+
+/* ---------- small helpers ---------- */
+
+function useCanvasTexture(w: number, h: number, draw: (g: CanvasRenderingContext2D, w: number, h: number) => void) {
+    return useMemo(() => {
+        const c = document.createElement('canvas')
+        c.width = w
+        c.height = h
+        const g = c.getContext('2d')
+        if (g) draw(g, w, h)
+        const t = new THREE.CanvasTexture(c)
+        t.colorSpace = THREE.SRGBColorSpace
+        t.anisotropy = 4
+        return t
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+}
+
+type PartProps = { pos?: V3; rot?: V3; color: string; rough?: number; metal?: number; shadow?: boolean }
+
+function B({ size, pos, rot, color, rough = 0.7, metal = 0, shadow = true }: PartProps & { size: V3 }) {
+    return (
+        <mesh position={pos} rotation={rot} castShadow={shadow} receiveShadow>
+            <boxGeometry args={size} />
+            <meshStandardMaterial color={color} roughness={rough} metalness={metal} />
+        </mesh>
+    )
+}
+function Cyl({ r1, r2, h, pos, rot, color, rough = 0.7, metal = 0, seg = 16 }: PartProps & { r1: number; r2: number; h: number; seg?: number }) {
+    return (
+        <mesh position={pos} rotation={rot} castShadow receiveShadow>
+            <cylinderGeometry args={[r1, r2, h, seg]} />
+            <meshStandardMaterial color={color} roughness={rough} metalness={metal} />
+        </mesh>
+    )
+}
+function Sph({ r, pos, scale, color, rough = 0.6 }: { r: number; pos: V3; scale?: V3; color: string; rough?: number }) {
+    return (
+        <mesh position={pos} scale={scale} castShadow receiveShadow>
+            <sphereGeometry args={[r, 20, 14]} />
+            <meshStandardMaterial color={color} roughness={rough} />
+        </mesh>
+    )
+}
+/** A cylinder joining two points (telescope legs). */
+function Rod({ a, b, r, color }: { a: V3; b: V3; r: number; color: string }) {
+    const { position, quaternion, len } = useMemo(() => {
+        const A = new THREE.Vector3(...a)
+        const Bv = new THREE.Vector3(...b)
+        const d = Bv.clone().sub(A)
+        const length = d.length()
+        return {
+            position: A.clone().add(Bv).multiplyScalar(0.5).toArray() as V3,
+            quaternion: new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()),
+            len: length,
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+    return (
+        <mesh position={position} quaternion={quaternion} castShadow>
+            <cylinderGeometry args={[r, r, len, 8]} />
+            <meshStandardMaterial color={color} metalness={0.5} roughness={0.35} />
+        </mesh>
+    )
+}
+/** Invisible (but clickable) sphere that makes small objects easy to hit. */
+function Hit({ pos, r }: { pos: V3; r: number }) {
+    return (
+        <mesh position={pos}>
+            <sphereGeometry args={[r, 10, 8]} />
+            <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+        </mesh>
+    )
+}
+
+type Api = {
+    setHover: (id: RoomTarget | null) => void
+    onSelect: (id: RoomTarget) => void
+    refs: React.MutableRefObject<Partial<Record<RoomTarget, THREE.Group | null>>>
+}
+function Interactive({ id, api, children }: { id: RoomTarget; api: Api; children: React.ReactNode }) {
+    return (
+        <group
+            ref={(el) => {
+                api.refs.current[id] = el
+            }}
+            onPointerOver={(e) => {
+                e.stopPropagation()
+                api.setHover(id)
+            }}
+            onPointerOut={() => api.setHover(null)}
+            onClick={(e) => {
+                e.stopPropagation()
+                api.onSelect(id)
+            }}
+        >
+            {children}
+        </group>
+    )
+}
+
+/* ---------- the room ---------- */
+
+function Room({ api }: { api: Api }) {
+    const floorTex = useCanvasTexture(512, 512, (g, w, h) => {
+        const n = 8
+        const pw = w / n
+        for (let i = 0; i < n; i++) {
+            g.fillStyle = `hsl(255,28%,${26 + ((i * 37) % 10)}%)`
+            g.fillRect(i * pw, 0, pw - 2, h)
+            g.fillStyle = 'rgba(0,0,0,.35)'
+            g.fillRect(i * pw + pw - 2, 0, 2, h)
+        }
+    })
+    useMemo(() => {
+        floorTex.wrapS = floorTex.wrapT = THREE.RepeatWrapping
+        floorTex.repeat.set(3.2, 3.5)
+    }, [floorTex])
+    const wallTex = useCanvasTexture(256, 256, (g, w, h) => {
+        const gr = g.createLinearGradient(0, 0, 0, h)
+        gr.addColorStop(0, '#272a5c')
+        gr.addColorStop(1, '#1b1d44')
+        g.fillStyle = gr
+        g.fillRect(0, 0, w, h)
+        g.fillStyle = 'rgba(255,255,255,.02)'
+        for (let i = 0; i < w; i += 32) g.fillRect(i, 0, 2, h)
+    })
+    const rugTex = useCanvasTexture(256, 256, (g, w, h) => {
+        const gr = g.createRadialGradient(128, 128, 10, 128, 128, 126)
+        gr.addColorStop(0, '#3a2f7a')
+        gr.addColorStop(0.5, '#2a2360')
+        gr.addColorStop(0.62, '#8f7cff')
+        gr.addColorStop(0.68, '#2a2360')
+        gr.addColorStop(1, '#1a1540')
+        g.fillStyle = gr
+        g.fillRect(0, 0, w, h)
+    })
+    const skyTex = useCanvasTexture(256, 180, (g, w, h) => {
+        const gr = g.createLinearGradient(0, 0, 0, h)
+        gr.addColorStop(0, '#03040c')
+        gr.addColorStop(1, '#101842')
+        g.fillStyle = gr
+        g.fillRect(0, 0, w, h)
+        for (let i = 0; i < 110; i++) {
+            g.fillStyle = `rgba(225,225,255,${0.3 + ((i * 53) % 70) / 100})`
+            g.fillRect(((i * 97) % 256), ((i * 61) % 180), 1 + (i % 3) * 0.6, 1 + (i % 3) * 0.6)
+        }
+        g.fillStyle = '#e8e6f2'
+        g.beginPath()
+        g.arc(200, 38, 13, 0, 6.3)
+        g.fill()
+        g.fillStyle = '#101842'
+        g.beginPath()
+        g.arc(206, 34, 12, 0, 6.3)
+        g.fill()
+    })
+    const keysTex = useCanvasTexture(190, 60, (g, w, h) => {
+        g.fillStyle = '#20203f'
+        g.fillRect(0, 0, w, h)
+        for (let r = 0; r < 4; r++) for (let c = 0; c < 13; c++) {
+            g.fillStyle = '#3a3a6c'
+            g.fillRect(6 + c * 14, 6 + r * 13, 11, 10)
+        }
+    })
+    const monitorTex = useCanvasTexture(336, 186, (g, w, h) => {
+        g.fillStyle = '#0b0d22'
+        g.fillRect(0, 0, w, h)
+        g.fillStyle = '#16193a'
+        g.fillRect(0, 0, w, 26)
+        g.fillStyle = '#e8e6f2'
+        g.font = 'bold 15px sans-serif'
+        g.fillText('Projects', 12, 18)
+        projectsData.slice(0, 4).forEach((p, i) => {
+            const x = 12 + (i % 2) * 160
+            const y = 40 + Math.floor(i / 2) * 70
+            g.fillStyle = '#12142e'
+            g.fillRect(x, y, 150, 60)
+            g.fillStyle = PROJECT_COLORS[i % PROJECT_COLORS.length]
+            g.fillRect(x, y, 150, 5)
+            g.fillStyle = '#e8e6f2'
+            g.font = 'bold 12px sans-serif'
+            g.fillText(p.title, x + 8, y + 26)
+            g.fillStyle = '#9a98b4'
+            g.font = '10px sans-serif'
+            g.fillText(p.tags.slice(0, 2).join(' · '), x + 8, y + 44)
+        })
+    })
+    const laptopTex = useCanvasTexture(172, 104, (g, w, h) => {
+        g.fillStyle = '#0b0d22'
+        g.fillRect(0, 0, w, h)
+        g.strokeStyle = '#8f7cff'
+        g.lineWidth = 2
+        const pts: Array<[number, number]> = [[30, 22], [142, 22], [30, 82], [142, 82]]
+        pts.forEach(([x, y]) => {
+            g.beginPath()
+            g.moveTo(86, 52)
+            g.lineTo(x, y)
+            g.stroke()
+        })
+        g.fillStyle = '#ffb86b'
+        g.beginPath()
+        g.arc(86, 52, 9, 0, 6.3)
+        g.fill()
+        pts.forEach(([x, y], i) => {
+            g.fillStyle = ['#7a8cff', '#e4b5ff', '#5fd6b0', '#ffb86b'][i]
+            g.beginPath()
+            g.arc(x, y, 7, 0, 6.3)
+            g.fill()
+        })
+    })
+    const mapTex = useCanvasTexture(440, 540, (g, w, h) => {
+        g.fillStyle = '#070a1c'
+        g.fillRect(0, 0, w, h)
+        LAND.forEach((ring) => {
+            g.beginPath()
+            ring.forEach(([lon, lat], i) => {
+                const p = project(lat, lon)
+                if (i) g.lineTo(p.x, p.y)
+                else g.moveTo(p.x, p.y)
+            })
+            g.closePath()
+            g.fillStyle = '#1d2350'
+            g.fill()
+            g.strokeStyle = '#3a4290'
+            g.lineWidth = 2
+            g.stroke()
+        })
+        const pts = careerPath.map((s) => {
+            const p = project(s.lat, s.lon)
+            return { x: p.x + (s.dx ?? 0), y: p.y + (s.dy ?? 0) }
+        })
+        g.strokeStyle = '#ffb86b'
+        g.lineWidth = 4
+        g.lineCap = 'round'
+        for (let k = 0; k < pts.length - 1; k++) {
+            const a = pts[k]
+            const b = pts[k + 1]
+            const d = Math.hypot(b.x - a.x, b.y - a.y)
+            g.beginPath()
+            g.moveTo(a.x, a.y)
+            g.quadraticCurveTo((a.x + b.x) / 2, (a.y + b.y) / 2 - d * 0.3, b.x, b.y)
+            g.stroke()
+        }
+        pts.forEach((p) => {
+            g.fillStyle = '#ffb86b'
+            g.beginPath()
+            g.arc(p.x, p.y, 9, 0, 6.3)
+            g.fill()
+        })
+    })
+    const posterTex = useCanvasTexture(160, 220, (g, w, h) => {
+        g.fillStyle = '#070a1c'
+        g.fillRect(0, 0, w, h)
+        for (let i = 0; i < 60; i++) {
+            g.fillStyle = 'rgba(255,255,255,.7)'
+            g.fillRect((i * 71) % 160, (i * 43) % 220, 1.5, 1.5)
+        }
+        const gr = g.createRadialGradient(70, 90, 5, 80, 100, 46)
+        gr.addColorStop(0, '#ffd9a0')
+        gr.addColorStop(1, '#8f5cff')
+        g.fillStyle = gr
+        g.beginPath()
+        g.arc(80, 100, 42, 0, 6.3)
+        g.fill()
+        g.strokeStyle = 'rgba(255,255,255,.6)'
+        g.lineWidth = 3
+        g.beginPath()
+        g.ellipse(80, 100, 70, 14, -0.4, 0, 6.3)
+        g.stroke()
+    })
+
+    const wood = '#4a3a78'
+    const dark = '#1c1b3c'
+    const fm = '#cfc8ee'
+    const guitarWood = '#d9863a'
+    const neck = '#3b2416'
+    const telescopeTop: V3 = [-3.8, 1.3, 0.3]
+
+    return (
+        <>
+            {/* shell */}
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[3, 0, 3]} receiveShadow>
+                <planeGeometry args={[16, 14]} />
+                <meshStandardMaterial map={floorTex} roughness={0.55} />
+            </mesh>
+            <mesh position={[3, 4, -4]} receiveShadow>
+                <planeGeometry args={[16, 8]} />
+                <meshStandardMaterial map={wallTex} roughness={0.9} />
+            </mesh>
+            <mesh rotation={[0, Math.PI / 2, 0]} position={[-5, 4, 3]} receiveShadow>
+                <planeGeometry args={[14, 8]} />
+                <meshStandardMaterial map={wallTex} roughness={0.9} />
+            </mesh>
+            <B size={[16, 0.16, 0.06]} pos={[3, 0.08, -3.97]} color="#0e0f2a" shadow={false} />
+            <B size={[0.06, 0.16, 14]} pos={[-4.97, 0.08, 3]} color="#0e0f2a" shadow={false} />
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0.4, 0.012, -0.2]} receiveShadow>
+                <circleGeometry args={[1.8, 48]} />
+                <meshStandardMaterial map={rugTex} roughness={1} />
+            </mesh>
+
+            {/* window with sky and frame */}
+            <mesh rotation={[0, Math.PI / 2, 0]} position={[-4.97, 2.7, -1]}>
+                <planeGeometry args={[2.6, 1.8]} />
+                <meshBasicMaterial map={skyTex} />
+            </mesh>
+            <B size={[0.08, 0.08, 2.75]} pos={[-4.95, 3.62, -1]} color={fm} rough={0.5} />
+            <B size={[0.1, 0.1, 2.85]} pos={[-4.93, 1.78, -1]} color={fm} rough={0.5} />
+            <B size={[0.08, 1.9, 0.08]} pos={[-4.95, 2.7, -2.3]} color={fm} rough={0.5} />
+            <B size={[0.08, 1.9, 0.08]} pos={[-4.95, 2.7, 0.3]} color={fm} rough={0.5} />
+            <B size={[0.06, 1.8, 0.05]} pos={[-4.95, 2.7, -1]} color={fm} rough={0.5} />
+            <B size={[0.06, 0.05, 2.6]} pos={[-4.95, 2.7, -1]} color={fm} rough={0.5} />
+
+            {/* desk */}
+            <B size={[4.4, 0.1, 1.8]} pos={[0, 1.05, -2.95]} color={wood} rough={0.55} />
+            <B size={[4.2, 0.5, 0.04]} pos={[0, 0.75, -3.8]} color={dark} rough={0.6} />
+            {([[-2.1, -3.7], [2.1, -3.7], [-2.1, -2.25], [2.1, -2.25]] as Array<[number, number]>).map(([x, z]) => (
+                <B key={`${x}${z}`} size={[0.1, 1, 0.1]} pos={[x, 0.5, z]} color={dark} rough={0.6} />
+            ))}
+            <B size={[1.3, 0.4, 1.5]} pos={[1.55, 0.78, -2.95]} color={dark} rough={0.6} />
+            <B size={[0.95, 0.04, 0.3]} pos={[-0.3, 1.12, -2.5]} color="#20203f" />
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-0.3, 1.143, -2.5]}>
+                <planeGeometry args={[0.93, 0.28]} />
+                <meshBasicMaterial map={keysTex} />
+            </mesh>
+            <B size={[0.1, 0.035, 0.16]} pos={[0.45, 1.12, -2.5]} color="#3a3a6c" />
+
+            {/* monitor = projects */}
+            <Interactive id="projects" api={api}>
+                <Hit pos={[-0.3, 1.95, -3.1]} r={1.1} />
+                <B size={[0.7, 0.03, 0.35]} pos={[-0.3, 1.11, -3.25]} color={dark} />
+                <B size={[0.12, 0.55, 0.08]} pos={[-0.3, 1.4, -3.3]} color={dark} />
+                <B size={[1.8, 1.05, 0.07]} pos={[-0.3, 1.98, -3.28]} color="#0a0a18" />
+                <mesh position={[-0.3, 1.98, -3.24]}>
+                    <planeGeometry args={[1.68, 0.93]} />
+                    <meshBasicMaterial map={monitorTex} />
+                </mesh>
+            </Interactive>
+
+            {/* laptop = skills */}
+            <Interactive id="skills" api={api}>
+                <Hit pos={[-1.6, 1.3, -2.5]} r={0.7} />
+                <B size={[0.95, 0.04, 0.62]} pos={[-1.6, 1.13, -2.5]} color="#8a89a8" metal={0.5} rough={0.35} />
+                <B size={[0.95, 0.62, 0.03]} pos={[-1.6, 1.47, -2.8]} rot={[-0.3, 0, 0]} color="#8a89a8" metal={0.5} rough={0.35} />
+                <mesh position={[-1.6, 1.47, -2.78]} rotation={[-0.3, 0, 0]}>
+                    <planeGeometry args={[0.86, 0.52]} />
+                    <meshBasicMaterial map={laptopTex} />
+                </mesh>
+            </Interactive>
+
+            {/* headphones, controller */}
+            <mesh position={[0.6, 1.3, -2.55]} castShadow>
+                <torusGeometry args={[0.2, 0.03, 8, 24, Math.PI]} />
+                <meshStandardMaterial color="#2b2b55" />
+            </mesh>
+            <Cyl r1={0.07} r2={0.07} h={0.05} pos={[0.4, 1.2, -2.55]} rot={[0, 0, Math.PI / 2]} color="#ff8f6b" />
+            <Cyl r1={0.07} r2={0.07} h={0.05} pos={[0.8, 1.2, -2.55]} rot={[0, 0, Math.PI / 2]} color="#ff8f6b" />
+            <Interactive id="games" api={api}>
+                <Hit pos={[1.3, 1.2, -2.3]} r={0.55} />
+                <B size={[0.55, 0.12, 0.32]} pos={[1.3, 1.17, -2.3]} color="#3a3a6a" rough={0.4} />
+                <B size={[0.14, 0.1, 0.3]} pos={[1.05, 1.14, -2.25]} color="#3a3a6a" rough={0.4} />
+                <B size={[0.14, 0.1, 0.3]} pos={[1.55, 1.14, -2.25]} color="#3a3a6a" rough={0.4} />
+                {([[1.45, -2.3, '#ff8f6b'], [1.55, -2.35, '#5fd6b0'], [1.35, -2.38, '#7a8cff']] as Array<[number, number, string]>).map(([x, z, c]) => (
+                    <Sph key={c} r={0.03} pos={[x, 1.25, z]} color={c} />
+                ))}
+            </Interactive>
+
+            {/* desk lamp */}
+            <Cyl r1={0.18} r2={0.2} h={0.04} pos={[1.9, 1.12, -3.2]} color={dark} />
+            <Cyl r1={0.025} r2={0.025} h={0.9} pos={[1.9, 1.55, -3.2]} color={fm} seg={8} />
+            <Cyl r1={0.02} r2={0.02} h={0.7} pos={[1.75, 1.95, -3.2]} rot={[0, 0, 0.9]} color={fm} seg={8} />
+            <Cyl r1={0.04} r2={0.16} h={0.22} pos={[1.55, 2.05, -3.2]} rot={[0, 0, 0.55]} color="#ffb86b" />
+            <mesh position={[1.5, 1.97, -3.2]}>
+                <sphereGeometry args={[0.05, 10, 8]} />
+                <meshBasicMaterial color="#fff0c0" />
+            </mesh>
+
+            {/* shelf: books, trophy, vinyl */}
+            <B size={[2.4, 0.06, 0.38]} pos={[-0.4, 3.75, -3.8]} color={wood} rough={0.55} />
+            {['#7a8cff', '#ff8f6b', '#5fd6b0', '#e4b5ff', '#ffb86b', '#cfc8ee'].map((c, i) => (
+                <B key={c} size={[0.09, 0.34 + (i % 3) * 0.06, 0.26]} pos={[-1.4 + i * 0.11, 3.95 + (i % 3) * 0.03, -3.8]} color={c} />
+            ))}
+            <Cyl r1={0.09} r2={0.12} h={0.06} pos={[0.1, 3.81, -3.8]} color="#d9b45a" metal={0.7} rough={0.3} />
+            <Cyl r1={0.03} r2={0.03} h={0.2} pos={[0.1, 3.94, -3.8]} color="#d9b45a" metal={0.7} rough={0.3} seg={8} />
+            <Cyl r1={0.12} r2={0.07} h={0.14} pos={[0.1, 4.1, -3.8]} color="#d9b45a" metal={0.7} rough={0.3} />
+            <Cyl r1={0.3} r2={0.3} h={0.015} pos={[0.55, 4.0, -3.78]} rot={[Math.PI / 2, 0, 0]} color="#0c0c14" rough={0.3} seg={40} />
+            <Cyl r1={0.1} r2={0.1} h={0.017} pos={[0.55, 4.0, -3.77]} rot={[Math.PI / 2, 0, 0]} color="#ff8f6b" seg={24} />
+
+            {/* guitar */}
+            <Interactive id="guitar" api={api}>
+                <Hit pos={[-3, 2, -3.8]} r={1.3} />
+                <Sph r={1} pos={[-3.1, 1.55, -3.85]} scale={[0.62, 0.7, 0.12]} color={guitarWood} rough={0.35} />
+                <Sph r={1} pos={[-2.98, 2.3, -3.85]} scale={[0.45, 0.5, 0.12]} color={guitarWood} rough={0.35} />
+                <mesh position={[-3.05, 1.85, -3.72]}>
+                    <circleGeometry args={[0.17, 24]} />
+                    <meshBasicMaterial color="#120a05" />
+                </mesh>
+                <mesh position={[-3.05, 1.85, -3.719]}>
+                    <ringGeometry args={[0.18, 0.22, 24]} />
+                    <meshBasicMaterial color="#3b2416" />
+                </mesh>
+                <B size={[0.3, 0.05, 0.03]} pos={[-3.07, 1.45, -3.72]} color={neck} />
+                <B size={[0.14, 1.75, 0.08]} pos={[-2.9, 3.1, -3.85]} color={neck} />
+                <B size={[0.24, 0.42, 0.06]} pos={[-2.9, 4.2, -3.85]} color={neck} />
+                {[0, 1, 2, 3, 4, 5].map((s) => (
+                    <mesh key={s} position={[-2.97 + s * 0.012, 2.85, -3.79]}>
+                        <boxGeometry args={[0.004, 2.7, 0.01]} />
+                        <meshBasicMaterial color="#e8e6f2" />
+                    </mesh>
+                ))}
+            </Interactive>
+
+            {/* telescope */}
+            <Interactive id="cosmos" api={api}>
+                <Hit pos={[-3.8, 1.5, 0.3]} r={1.1} />
+                <Rod a={[-3.3, 0, 0.3]} b={telescopeTop} r={0.03} color="#9a98b4" />
+                <Rod a={[-4.15, 0, 0.78]} b={telescopeTop} r={0.03} color="#9a98b4" />
+                <Rod a={[-4.15, 0, -0.18]} b={telescopeTop} r={0.03} color="#9a98b4" />
+                <group position={telescopeTop} rotation={[-0.2, 0, 0.9]}>
+                    <Cyl r1={0.17} r2={0.2} h={1.7} pos={[0, 0.6, 0]} color="#e8e6f2" rough={0.3} seg={20} />
+                    <Cyl r1={0.19} r2={0.19} h={0.06} pos={[0, 1.47, 0]} color="#2b2b55" seg={20} />
+                    <Sph r={0.12} pos={[0, 0, 0]} color="#9a98b4" rough={0.35} />
+                </group>
+            </Interactive>
+
+            {/* wall map = career */}
+            <Interactive id="career" api={api}>
+                <Hit pos={[3.1, 3.2, -3.9]} r={1.1} />
+                <B size={[1.66, 2, 0.05]} pos={[3.1, 3.2, -3.95]} color="#d9b45a" metal={0.5} rough={0.4} />
+                <mesh position={[3.1, 3.2, -3.92]}>
+                    <planeGeometry args={[1.5, 1.84]} />
+                    <meshBasicMaterial map={mapTex} />
+                </mesh>
+            </Interactive>
+            <B size={[0.9, 1.2, 0.04]} pos={[1.65, 3.1, -3.96]} color={fm} />
+            <mesh position={[1.65, 3.1, -3.935]}>
+                <planeGeometry args={[0.8, 1.1]} />
+                <meshBasicMaterial map={posterTex} />
+            </mesh>
+
+            {/* plant */}
+            <Cyl r1={0.28} r2={0.22} h={0.4} pos={[4.35, 0.2, -3.2]} color="#c0603a" />
+            {[0, 1, 2, 3, 4, 5, 6].map((i) => {
+                const a = (i / 7) * 6.28
+                return (
+                    <Sph
+                        key={i}
+                        r={0.2}
+                        pos={[4.35 + Math.cos(a) * 0.18, 0.85 + (i % 3) * 0.1, -3.2 + Math.sin(a) * 0.12]}
+                        scale={[0.55, 1.5, 0.3]}
+                        color="#2f8a5a"
+                    />
+                )
+            })}
+
+            {/* string lights */}
+            {Array.from({ length: 26 }, (_, i) => (
+                <mesh key={i} position={[-4.6 + i * 0.37, 4.62 - Math.sin((i / 25) * Math.PI) * 0.35, -3.93]}>
+                    <sphereGeometry args={[0.045, 8, 6]} />
+                    <meshBasicMaterial color={['#ffb86b', '#ffd9a0', '#ff8f6b'][i % 3]} />
+                </mesh>
+            ))}
+        </>
+    )
+}
+
+/* ---------- camera ---------- */
+
+function CameraRig({ focus, reduced }: { focus: RoomTarget | null; reduced: boolean }) {
+    const { camera, size } = useThree()
+    const cur = useRef({
+        pos: new THREE.Vector3(...PRESETS.home.pos),
+        look: new THREE.Vector3(...PRESETS.home.look),
+    })
+    const tmp = useMemo(() => new THREE.Vector3(), [])
+    useFrame((state, dt) => {
+        const narrow = size.width / size.height < 1.1
+        const target = focus ? PRESETS[focus] : { pos: narrow ? HOME_NARROW : PRESETS.home.pos, look: PRESETS.home.look }
+        const k = reduced ? 1 : Math.min(1, dt * 2.8)
+        cur.current.pos.lerp(tmp.set(...target.pos), k)
+        cur.current.look.lerp(tmp.set(...target.look), k)
+        const px = reduced ? 0 : state.pointer.x * 0.35
+        const py = reduced ? 0 : state.pointer.y * 0.2
+        camera.position.set(cur.current.pos.x + px, cur.current.pos.y + py, cur.current.pos.z)
+        camera.lookAt(cur.current.look)
+    })
+    return null
+}
+
+/** Moves the DOM label buttons (outside the canvas) onto the 3D position of their object. */
+function LabelProjector({ labels }: { labels: React.MutableRefObject<Partial<Record<RoomTarget, HTMLButtonElement | null>>> }) {
+    const { camera, size } = useThree()
+    const v = useMemo(() => new THREE.Vector3(), [])
+    useFrame(() => {
+        HOTSPOTS.forEach((h) => {
+            const el = labels.current[h.id]
+            if (!el) return
+            v.set(...h.pos).project(camera)
+            el.style.transform = `translate(${(v.x * 0.5 + 0.5) * size.width}px, ${(-v.y * 0.5 + 0.5) * size.height}px) translate(-50%, -100%)`
+            el.style.opacity = v.z < 1 ? '1' : '0'
+        })
+    })
+    return null
+}
+
+/* ---------- scene ---------- */
+
+type Props = {
+    focus: RoomTarget | null
+    reducedMotion: boolean
+    onSelect: (id: RoomTarget) => void
+}
+
+export default function RoomScene({ focus, reducedMotion, onSelect }: Props) {
+    const [hover, setHover] = useState<RoomTarget | null>(null)
+    const refs = useRef<Partial<Record<RoomTarget, THREE.Group | null>>>({})
+    const labels = useRef<Partial<Record<RoomTarget, HTMLButtonElement | null>>>({})
+    const api = useMemo<Api>(() => ({ setHover, onSelect, refs }), [onSelect])
+
+    // highlight the hovered / focused object
+    useEffect(() => {
+        ;(Object.keys(refs.current) as RoomTarget[]).forEach((id) => {
+            const on = hover === id || focus === id
+            refs.current[id]?.traverse((o) => {
+                const m = (o as THREE.Mesh).material as THREE.MeshStandardMaterial | undefined
+                if (m && 'emissive' in m && !(m as unknown as THREE.MeshBasicMaterial).isMeshBasicMaterial) {
+                    m.emissive.set(on ? 0x3a2870 : 0x000000)
+                }
+            })
+        })
+        document.body.style.cursor = hover ? 'pointer' : ''
+        return () => {
+            document.body.style.cursor = ''
+        }
+    }, [hover, focus])
+
+    return (
+        <div className="relative h-full w-full overflow-hidden">
+        <Canvas shadows dpr={[1, 1.5]} camera={{ fov: 45, near: 0.1, far: 100, position: PRESETS.home.pos }} gl={{ antialias: true }}>
+            <color attach="background" args={['#05060c']} />
+            <fog attach="fog" args={['#05060c', 16, 34]} />
+            <ambientLight intensity={1.7} color="#7a80c4" />
+            <hemisphereLight args={['#aab4ff', '#2a2040', 1.3]} />
+            <directionalLight
+                position={[5, 9, 6]}
+                intensity={2.2}
+                color="#fff0dd"
+                castShadow
+                shadow-mapSize={[1024, 1024]}
+                shadow-camera-left={-8}
+                shadow-camera-right={8}
+                shadow-camera-top={8}
+                shadow-camera-bottom={-8}
+                shadow-camera-near={1}
+                shadow-camera-far={25}
+                shadow-bias={-0.0004}
+            />
+            <pointLight position={[1.9, 2.1, -3.1]} intensity={6} distance={7} color="#ffc98a" />
+            <pointLight position={[-0.3, 2.1, -2.4]} intensity={5} distance={7} color="#8f7cff" />
+            <pointLight position={[-4.4, 2.7, -1]} intensity={5} distance={9} color="#9bb6ff" />
+
+            <Room api={api} />
+            <CameraRig focus={focus} reduced={reducedMotion} />
+            <LabelProjector labels={labels} />
+        </Canvas>
+
+        {/* labels: real buttons (keyboard + screen reader friendly), placed over their object */}
+        {HOTSPOTS.map((h) => (
+            <button
+                key={h.id}
+                ref={(el) => {
+                    labels.current[h.id] = el
+                }}
+                type="button"
+                onClick={() => onSelect(h.id)}
+                onMouseEnter={() => setHover(h.id)}
+                onMouseLeave={() => setHover(null)}
+                className={
+                    'absolute left-0 top-0 flex items-center gap-2 whitespace-nowrap rounded-full border border-amber-300 bg-slate-900/90 px-3 py-1 text-xs font-medium text-white shadow-lg transition-colors hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300' +
+                    (focus ? ' pointer-events-none invisible' : '')
+                }
+            >
+                <span className="h-2 w-2 animate-pulse rounded-full bg-amber-300" aria-hidden="true" />
+                {h.label}
+            </button>
+        ))}
+        </div>
+    )
+}
