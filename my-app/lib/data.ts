@@ -52,20 +52,44 @@ export const experiencesData = [
     date: "2021 - 2024",
   },
   {
-    title: "Front-End Developer internships",
+    title: "Full-stack developer internship · Datascio",
     location: "Ile-de-France",
     description:
-      "I worked as a front-end developer for 1 year: 6 months at Orange, building an internal user interface for managers, and another 6 months as a full-stack developer building a POC for managing data using a pipeline for Datascio.",
+      "6-month internship as a full-stack developer, building a POC for managing data using a pipeline.",
     icon: React.createElement(CgWorkAlt),
+    date: "Mar 2020 - Sep 2020",
+  },
+  {
+    title: "Master's degree · IAE Rouen",
+    location: "Rouen",
+    description:
+      "Dual-competence master's degree.",
+    icon: React.createElement(LuGraduationCap),
     date: "2019 - 2020",
   },
   {
-    title: "Graduated INPT, IAE Rouen",
-    location: "Rabat, Rouen",
+    title: "Front-end developer internship · Orange",
+    location: "Arcueil",
     description:
-      "I obtained my engineering degree",
+      "6-month internship as a front-end developer, building an internal user interface for managers.",
+    icon: React.createElement(CgWorkAlt),
+    date: "Mar 2019 - Sep 2019",
+  },
+  {
+    title: "Erasmus exchange · Télécom SudParis",
+    location: "Évry",
+    description:
+      "Erasmus exchange at Télécom SudParis, during my engineering studies.",
     icon: React.createElement(LuGraduationCap),
-    date: "2019",
+    date: "2018 - 2019",
+  },
+  {
+    title: "Engineering degree · INPT",
+    location: "Rabat",
+    description:
+      "Engineering school. I obtained my engineering degree.",
+    icon: React.createElement(LuGraduationCap),
+    date: "2016 - 2019",
   },
 ] as const;
 

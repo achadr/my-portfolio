@@ -73,3 +73,54 @@ export const skillGroups: readonly SkillGroup[] = [
     skills: ["Node.js", "MongoDB", "GraphQL", "Apollo", "Python", "Git"],
   },
 ];
+
+/**
+ * Career path shown on the map, in chronological order. `experience` is the
+ * index of the matching entry in `experiencesData` (./data.ts, newest first);
+ * `year` is a start date, only used to order the stops and to label the
+ * current year. Positions are approximate: this is a schematic map, and
+ * `dx`/`dy` (map units) fan out stops that are only a few kilometres apart so
+ * their markers and labels do not overlap.
+ */
+export type CareerStop = {
+  label: string;
+  lat: number;
+  lon: number;
+  year: number;
+  experience: number;
+  /** Which side of the marker the label sits on. */
+  labelSide: "left" | "right";
+  dx?: number;
+  dy?: number;
+};
+
+export const careerPath: readonly CareerStop[] = [
+  { label: "INPT · Rabat", lat: 34.02, lon: -6.84, year: 2016, experience: 6, labelSide: "right" },
+  { label: "Télécom SudParis · Évry", lat: 48.63, lon: 2.44, year: 2018, experience: 5, labelSide: "right", dx: 8, dy: 30 },
+  { label: "Orange · Arcueil", lat: 48.81, lon: 2.33, year: 2019.17, experience: 4, labelSide: "left", dx: -14, dy: 15 },
+  { label: "IAE Rouen", lat: 49.44, lon: 1.1, year: 2019.75, experience: 3, labelSide: "left" },
+  { label: "Datascio · Île-de-France", lat: 48.7, lon: 2.6, year: 2020.17, experience: 2, labelSide: "right", dx: 16, dy: 14 },
+  { label: "Geotwin · Paris", lat: 48.85, lon: 2.35, year: 2021, experience: 1, labelSide: "right" },
+  { label: "Freelance · France", lat: 45.4, lon: 1.0, year: 2025, experience: 0, labelSide: "right" },
+];
+
+/**
+ * Real-scale bars of the career timeline (one lane per step, oldest first).
+ * `from`/`to` are in years. Steps dated by year only cover the whole calendar
+ * years named ("2016 - 2019" runs to 2020.0); the two internships use their months.
+ * "Present" ends at the end of the axis.
+ */
+export type CareerSpan = { experience: number; label: string; from: number; to: number };
+
+export const careerSpans: readonly CareerSpan[] = [
+  { experience: 6, label: "INPT", from: 2016, to: 2020 },
+  { experience: 5, label: "Erasmus", from: 2018, to: 2020 },
+  { experience: 4, label: "Orange", from: 2019.17, to: 2019.67 },
+  { experience: 3, label: "IAE Rouen", from: 2019, to: 2021 },
+  { experience: 2, label: "Datascio", from: 2020.17, to: 2020.67 },
+  { experience: 1, label: "Geotwin", from: 2021, to: 2025 },
+  { experience: 0, label: "Freelance", from: 2025, to: 2027 },
+];
+
+export const TIMELINE_FROM = 2016;
+export const TIMELINE_TO = 2027;

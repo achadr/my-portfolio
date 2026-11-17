@@ -1,4 +1,4 @@
-import { experiencesData, projectsData } from "./data";
+import { experiencesData, projectsData, skillsData } from "./data";
 import type { SkillName } from "./content";
 
 // Whole-word, case-insensitive match so "Git" does not match "digital"
@@ -22,4 +22,12 @@ export function experiencesUsing(skill: SkillName) {
     .filter(({ experience }) =>
       mentions(`${experience.title} ${experience.description}`, skill)
     );
+}
+
+/** Skills (from the skills list) that an experience entry mentions. */
+export function skillsInExperience(index: number): SkillName[] {
+  const experience = experiencesData[index];
+  if (!experience) return [];
+  const text = `${experience.title} ${experience.description}`;
+  return skillsData.filter((skill) => mentions(text, skill));
 }

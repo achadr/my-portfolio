@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import Header from "../components/Header";
 import ActiveSectionContextProvider from "../../context/active-section";
+import FocusContextProvider from "../../context/focus";
 import ToasterProvider from "../components/ToasterProvider";
 import AnimatedBackground from "../components/AnimatedBackground";
 
@@ -67,8 +68,10 @@ export default function RootLayout({
           Skip to main content
         </a>
         <ActiveSectionContextProvider>
-          <Header/>
-          {children}
+          <FocusContextProvider>
+            <Header/>
+            {children}
+          </FocusContextProvider>
         </ActiveSectionContextProvider>
         <ToasterProvider />
       </body>
