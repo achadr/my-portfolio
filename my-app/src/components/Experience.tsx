@@ -10,6 +10,7 @@ import {
   import "react-vertical-timeline-component/style.min.css";
   import { experiencesData } from "../../lib/data";
   import { useSectionInView } from "../../lib/hooks";
+  import { experienceAnchor } from "../../lib/relations";
 //   import { useTheme } from "@/context/theme-context";
 
 export default function Experience() {
@@ -27,6 +28,8 @@ export default function Experience() {
                 experiencesData.map((experience,index) => (
                     <React.Fragment key={index}>
                         <VerticalTimelineElement
+                            id={experienceAnchor(index)}
+                            className='scroll-mt-28'
                             visible={hasAnimated ? true : inView}
                             contentStyle={{
                                 background: "#f3f4f6",
