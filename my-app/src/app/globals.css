@@ -5,3 +5,38 @@
 html {
     --line-color: #e5e7eb
 }
+
+/* Animated background (see AnimatedBackground.tsx): opacity/transform only, GPU-friendly. */
+@keyframes bg-twinkle {
+    0%, 100% { opacity: 0.55; }
+    50% { opacity: 1; }
+}
+@keyframes bg-float {
+    0% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); opacity: 0; }
+    15% { opacity: 0.5; }
+    33% { transform: translate3d(0, -36vh, 0) rotate(calc(var(--rot) * 0.33)) scale(1.1); }
+    85% { opacity: 0.5; }
+    100% { transform: translate3d(0, -110vh, 0) rotate(var(--rot)) scale(0.3); opacity: 0; }
+}
+@keyframes bg-orb {
+    0%, 100% { opacity: 0.35; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(1.12); }
+}
+
+.bg-twinkle {
+    animation: bg-twinkle 4s ease-in-out infinite;
+    will-change: opacity;
+}
+.bg-float {
+    animation: bg-float 30s ease-in-out infinite both;
+    will-change: transform, opacity;
+}
+.bg-orb {
+    animation: bg-orb 16s ease-in-out infinite;
+    will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .bg-twinkle, .bg-float, .bg-orb { animation: none; }
+    .bg-float { opacity: 0; }
+}

@@ -29,6 +29,8 @@ export default function Experience() {
     // Another section (skill tree, skills list) asked to show a given experience.
     useEffect(() => {
         if (!focusRequest) return
+        // When the 3D room is open it shows the career itself: leave the page behind it alone.
+        if (document.querySelector('[data-room-overlay]')) return
         const desktop = window.matchMedia('(min-width: 768px)').matches
         const target = viewRef.current === 'map' && desktop
             ? document.getElementById('experience')

@@ -11,6 +11,7 @@ import { useSectionInView } from '../../lib/hooks'
 import { useActiveSectionContext } from '../../context/active-section'
 import { profile } from '../../lib/content'
 import toast from 'react-hot-toast'
+import RoomLauncher from './room/RoomLauncher'
 
 export default function Intro() {
 
@@ -125,8 +126,9 @@ export default function Intro() {
                 href={profile.cv}
                 download
                 >
-                Download CV <HiDownload className='opacity-60 group-hover:translate-y-1 transition'/> 
+                Download CV <HiDownload className='opacity-60 group-hover:translate-y-1 transition'/>
             </a>
+            <RoomLauncher />
 
             <a
                 className='bg-white-700 p-4 flex items-center gap-2 rounded-full focus:scale-110 hover:scale-[1.15] hover:cursor-pointer active:scale-105 transition'

@@ -26,7 +26,10 @@ export default function FocusContextProvider({ children }: { children: React.Rea
 
     const focusSkill = useCallback((name: SkillName) => {
         setSkill((prev) => ({ name, n: (prev?.n ?? 0) + 1 }))
-        document.getElementById("skills")?.scrollIntoView({ behavior: "smooth", block: "start" })
+        // When the 3D room is open it shows the skill itself: leave the page behind it alone.
+        if (!document.querySelector("[data-room-overlay]")) {
+            document.getElementById("skills")?.scrollIntoView({ behavior: "smooth", block: "start" })
+        }
     }, [])
     const focusExperience = useCallback((index: number) => {
         setExperience((prev) => ({ index, n: (prev?.n ?? 0) + 1 }))
