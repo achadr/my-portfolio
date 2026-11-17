@@ -9,11 +9,22 @@ import { BsArrowRight, BsGithub, BsLinkedin } from 'react-icons/bs'
 import { HiDownload } from 'react-icons/hi'
 import { useSectionInView } from '../../lib/hooks'
 import { useActiveSectionContext } from '../../context/active-section'
+import { profile } from '../../lib/content'
+import toast from 'react-hot-toast'
 
 export default function Intro() {
 
     const {setActiveSection, setTimeOfLastClick} = useActiveSectionContext();
     const {ref} = useSectionInView("Home",0.5)
+
+    const copyEmail = async () => {
+        try {
+            await navigator.clipboard.writeText(profile.email)
+            toast.success("Email copied")
+        } catch {
+            toast.error(`Copy failed. My email: ${profile.email}`)
+        }
+    }
 
   return (
     <section className='mb-28 max-w-[50rem] sm:mb-0 scroll-mt-[100rem]' id="home" ref={ref}>
@@ -56,8 +67,8 @@ export default function Intro() {
                 </motion.span>
             </div>
         </div>
-        <motion.h1 
-            className="mb-10 mt-4 px-4 text-2xl font-small !leading-[1.5] sm:text-4xl"
+        <motion.h1
+            className="mb-4 mt-4 px-4 text-2xl font-small !leading-[1.5] sm:text-4xl"
             initial={{ opacity:0, y: 100}}
             animate={{ opacity:1, y: 0}}
             >
@@ -67,6 +78,29 @@ export default function Intro() {
         building <span className="italic">sites & apps</span>. My main focus is{" "}
         <span className="underline">React</span>.
         </motion.h1>
+
+        <motion.p
+            className="mb-5 px-4 text-base text-gray-800 sm:text-lg"
+            initial={{ opacity:0, y: 60}}
+            animate={{ opacity:1, y: 0}}
+            transition={{ delay: 0.05 }}
+        >
+            {profile.pitch}
+        </motion.p>
+
+        <motion.ul
+            className="mb-8 flex flex-wrap items-center justify-center gap-2 px-4 text-sm"
+            aria-label="Key technologies and experience"
+            initial={{ opacity:0, y: 60}}
+            animate={{ opacity:1, y: 0}}
+            transition={{ delay: 0.08 }}
+        >
+            {profile.facts.map((fact) => (
+                <li key={fact} className="rounded-full border border-black/10 bg-white px-3 py-1 text-gray-700">
+                    {fact}
+                </li>
+            ))}
+        </motion.ul>
 
         <motion.div 
             className="flex flex-col sm:flex-row items-center justify-center gap-2 px-4 text-lg font-medium"
@@ -88,7 +122,7 @@ export default function Intro() {
             </Link>
             <a
                 className='group bg-white px-7 py-3 flex items-center gap-2 rounded-full focus:scale-110 hover:scale-110 hover:cursor-pointer active:scale-105 transition border border-black/10'
-                href="/ACHRAF-BOUGATTAYA-CV_EN.pdf"
+                href={profile.cv}
                 download
                 >
                 Download CV <HiDownload className='opacity-60 group-hover:translate-y-1 transition'/> 
@@ -96,7 +130,7 @@ export default function Intro() {
 
             <a
                 className='bg-white-700 p-4 flex items-center gap-2 rounded-full focus:scale-110 hover:scale-[1.15] hover:cursor-pointer active:scale-105 transition'
-                href="https://www.linkedin.com/in/achraf-bougattaya-747320177/"
+                href={profile.linkedin}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Visit my LinkedIn profile"
@@ -105,7 +139,7 @@ export default function Intro() {
             </a>
             <a
                 className='bg-white-700 p-4 flex items-center gap-2 text-[1.35rem] rounded-full focus:scale-[1.15] hover:scale-110 hover:cursor-pointer active:scale-105 transition'
-                href="https://github.com/achadr?tab=repositories"
+                href={profile.github}
                 target='_blank'
                 rel="noopener noreferrer"
                 aria-label="Visit my GitHub repositories"
@@ -113,6 +147,17 @@ export default function Intro() {
               <BsGithub/>
             </a>
         </motion.div>
+
+        <p className="mt-5 px-4 text-center text-sm text-gray-700">
+            {profile.email}{" "}
+            <button
+                type="button"
+                onClick={copyEmail}
+                className="ml-1 rounded-full border border-black/10 bg-white px-3 py-1 text-gray-800 transition hover:border-gray-900/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900"
+            >
+                Copy
+            </button>
+        </p>
     </section>
   )
 }
