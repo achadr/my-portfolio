@@ -2,6 +2,7 @@
 
 import { Resend } from "resend"
 import { getErrorMessage, validateString } from "../../lib/utils";
+import { CONTACT_EMAIL } from "../../lib/contact";
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -10,6 +11,12 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 export const sendEmail = async (formData : FormData) => {
     const senderEmail = formData.get('senderEmail')
     const message = formData.get('message')
+
+    // Honeypot: a hidden field that real visitors never fill in. Bots usually do.
+    // Answer as if it worked so they learn nothing, but send nothing.
+    if (formData.get('website')) {
+        return { data: null }
+    }
 
     // Check if API key is configured
     if (!process.env.RESEND_API_KEY) {
@@ -52,7 +59,7 @@ ${message}
 
         data = await resend.emails.send({
             from: "Portfolio Contact Form <onboarding@resend.dev>",
-            to: process.env.RECIPIENT_EMAIL || 'bougattaya.achraf@gmail.com',
+            to: process.env.RECIPIENT_EMAIL || CONTACT_EMAIL,
             subject: "New message from your portfolio contact form",
             replyTo: senderEmail as string,
             text: emailBody,
