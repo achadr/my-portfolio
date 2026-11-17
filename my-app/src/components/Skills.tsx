@@ -2,6 +2,7 @@
 import React, { useState } from 'react'
 
 import SectionHeading from './SectionHeading'
+import SkillsTree from './SkillsTree'
 import { skillGroups, type SkillName } from '../../lib/content'
 import {
     experienceAnchor,
@@ -31,18 +32,43 @@ export default function Skills() {
 
   const {ref} = useSectionInView("Skills")
   const [selected, setSelected] = useState<SkillName | null>(null)
+  const [view, setView] = useState<'tree' | 'list'>('tree')
 
   const projects = selected ? projectsUsing(selected) : []
   const experiences = selected ? experiencesUsing(selected) : []
 
   return (
-   <section id='skills' ref={ref} className='mb-28 max-w-[53rem] scroll-mt-28 text-center sm:mb-40'>
+   <section id='skills' ref={ref} className='mb-28 w-full max-w-[53rem] scroll-mt-28 text-center sm:mb-40'>
         <SectionHeading>My Skills</SectionHeading>
-        <p className='-mt-4 mb-8 text-sm text-gray-600'>
+        <p className='-mt-4 mb-6 text-sm text-gray-600'>
             Pick a skill to see where I used it.
         </p>
 
-        <div className='flex flex-col gap-8'>
+        {/* The tree needs room: it is only offered from the md breakpoint up. */}
+        <div className='mb-6 hidden justify-center md:flex' role="group" aria-label="Skills display">
+            {(['tree', 'list'] as const).map((mode) => (
+                <button
+                    key={mode}
+                    type="button"
+                    aria-pressed={view === mode}
+                    onClick={() => setView(mode)}
+                    className={clsx(
+                        'border px-5 py-2 text-sm capitalize transition first:rounded-l-full last:rounded-r-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900',
+                        view === mode
+                            ? 'border-gray-900 bg-gray-900 text-white'
+                            : 'border-black/[0.1] bg-white text-gray-700 hover:bg-gray-50'
+                    )}
+                >
+                    {mode}
+                </button>
+            ))}
+        </div>
+
+        <div className={clsx('hidden', view === 'tree' && 'md:block')}>
+            <SkillsTree selected={selected} onSelect={setSelected} />
+        </div>
+
+        <div className={clsx('flex flex-col gap-8', view === 'tree' && 'md:hidden')}>
             {skillGroups.map((group, groupIndex) => (
                 <div key={group.id}>
                     <h3 className='text-lg font-semibold'>{group.name}</h3>
@@ -83,7 +109,8 @@ export default function Skills() {
             aria-label="Where this skill is used"
             className={clsx(
                 'mx-auto mt-8 max-w-[34rem] rounded-xl border border-black/5 bg-gray-100 p-5 text-left transition',
-                !selected && 'hidden'
+                !selected && 'hidden',
+                view === 'tree' && 'md:hidden'
             )}
         >
             {selected && (

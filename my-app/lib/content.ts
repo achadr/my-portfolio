@@ -28,6 +28,10 @@ export type SkillName = (typeof skillsData)[number];
 export type SkillGroup = {
   id: string;
   name: string;
+  /** Short label used inside the skill tree nodes. */
+  short: string;
+  /** Accent colour of the group (tree + highlights). */
+  color: string;
   tagline: string;
   skills: readonly SkillName[];
 };
@@ -37,6 +41,8 @@ export const skillGroups: readonly SkillGroup[] = [
   {
     id: "frontend",
     name: "Front-end",
+    short: "Front-end",
+    color: "#4f46e5",
     tagline: "Typed, animated, responsive interfaces.",
     skills: [
       "HTML",
@@ -53,12 +59,16 @@ export const skillGroups: readonly SkillGroup[] = [
   {
     id: "maps",
     name: "Maps & data viz",
+    short: "Maps & viz",
+    color: "#9333ea",
     tagline: "Interactive maps and readable charts for dense data.",
     skills: ["DeckGL", "Mapbox", "Recharts", "D3.js"],
   },
   {
     id: "backend",
     name: "Back-end, data & tooling",
+    short: "Back-end",
+    color: "#059669",
     tagline: "APIs and databases that feed the interface.",
     skills: ["Node.js", "MongoDB", "GraphQL", "Apollo", "Python", "Git"],
   },
