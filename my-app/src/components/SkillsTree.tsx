@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import clsx from 'clsx'
 import ProfilePic from '../../public/me.png'
 import { skillGroups, type SkillName } from '../../lib/content'
+import { useFocus } from '../../context/focus'
 import {
     experienceAnchor,
     experiencesUsing,
@@ -65,7 +66,7 @@ function goToAnchor(id: string) {
 
 const trim = (s: string, n: number) => (s.length > n ? `${s.slice(0, n - 1)}…` : s)
 
-type RelItem = { kind: 'project' | 'career'; label: string; sub?: string; anchor: string }
+type RelItem = { kind: 'project' | 'career'; label: string; sub?: string; anchor: string; index: number }
 
 function relatedItems(skill: SkillName): RelItem[] {
     return [
@@ -73,12 +74,14 @@ function relatedItems(skill: SkillName): RelItem[] {
             kind: 'project' as const,
             label: project.title,
             anchor: projectAnchor(index),
+            index,
         })),
         ...experiencesUsing(skill).map(({ experience, index }) => ({
             kind: 'career' as const,
             label: experience.title,
             sub: experience.date,
             anchor: experienceAnchor(index),
+            index,
         })),
     ]
 }
@@ -92,6 +95,9 @@ export default function SkillsTree({ selected, onSelect }: Props) {
     const branches = useMemo(buildLayout, [])
     const svgRef = useRef<SVGSVGElement>(null)
     const relRef = useRef<SVGGElement>(null)
+    const { focusExperience } = useFocus()
+    // Projects scroll to their card; career steps open the career map / timeline.
+    const openRelated = (it: RelItem) => (it.kind === 'career' ? focusExperience(it.index) : goToAnchor(it.anchor))
     const [focusedGroup, setFocusedGroup] = useState<string | null>(null)
 
     const selectedLeaf = selected
@@ -371,8 +377,8 @@ export default function SkillsTree({ selected, onSelect }: Props) {
                                             role="link"
                                             tabIndex={0}
                                             aria-label={`${isProject ? 'Project' : 'Career'}: ${it.label}`}
-                                            onClick={() => goToAnchor(it.anchor)}
-                                            onKeyDown={activate(() => goToAnchor(it.anchor))}
+                                            onClick={() => openRelated(it)}
+                                            onKeyDown={activate(() => openRelated(it))}
                                         >
                                             <rect
                                                 className="transition-colors group-hover:fill-gray-700 group-focus-visible:stroke-amber-500"

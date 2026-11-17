@@ -1,16 +1,16 @@
 "use client"
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 import SectionHeading from './SectionHeading'
 import SkillsTree from './SkillsTree'
 import { skillGroups, type SkillName } from '../../lib/content'
 import {
-    experienceAnchor,
     experiencesUsing,
     projectAnchor,
     projectsUsing,
 } from '../../lib/relations'
 import { useSectionInView } from '../../lib/hooks'
+import { useFocus } from '../../context/focus'
 import clsx from 'clsx'
 import { motion } from "framer-motion"
 
@@ -33,6 +33,14 @@ export default function Skills() {
   const {ref} = useSectionInView("Skills")
   const [selected, setSelected] = useState<SkillName | null>(null)
   const [view, setView] = useState<'tree' | 'list'>('tree')
+  const { skill: focusRequest, focusExperience } = useFocus()
+
+  // Another section (e.g. the career map) asked to show a given skill.
+  useEffect(() => {
+    if (!focusRequest) return
+    setView('tree')
+    setSelected(focusRequest.name)
+  }, [focusRequest])
 
   const projects = selected ? projectsUsing(selected) : []
   const experiences = selected ? experiencesUsing(selected) : []
@@ -148,9 +156,13 @@ export default function Skills() {
                             <ul className='mt-1 flex flex-col gap-1'>
                                 {experiences.map(({ experience, index }) => (
                                     <li key={experience.title}>
-                                        <a className='underline underline-offset-2 hover:text-gray-950' href={`#${experienceAnchor(index)}`}>
+                                        <button
+                                            type="button"
+                                            className='text-left underline underline-offset-2 hover:text-gray-950'
+                                            onClick={() => focusExperience(index)}
+                                        >
                                             {experience.title} <span className='text-gray-600'>· {experience.date}</span>
-                                        </a>
+                                        </button>
                                     </li>
                                 ))}
                             </ul>
