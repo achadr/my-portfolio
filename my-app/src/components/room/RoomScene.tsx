@@ -540,10 +540,12 @@ function LabelProjector({ labels }: { labels: React.MutableRefObject<Partial<Rec
 type Props = {
     focus: RoomTarget | null
     reducedMotion: boolean
+    /** Stop rendering (e.g. while an opaque panel covers the scene) to save the GPU and keep the UI smooth. */
+    paused?: boolean
     onSelect: (id: RoomTarget) => void
 }
 
-export default function RoomScene({ focus, reducedMotion, onSelect }: Props) {
+export default function RoomScene({ focus, reducedMotion, paused = false, onSelect }: Props) {
     const [hover, setHover] = useState<RoomTarget | null>(null)
     const refs = useRef<Partial<Record<RoomTarget, THREE.Group | null>>>({})
     const labels = useRef<Partial<Record<RoomTarget, HTMLButtonElement | null>>>({})
@@ -568,7 +570,13 @@ export default function RoomScene({ focus, reducedMotion, onSelect }: Props) {
 
     return (
         <div className="relative h-full w-full overflow-hidden">
-        <Canvas shadows dpr={[1, 1.5]} camera={{ fov: 45, near: 0.1, far: 100, position: PRESETS.home.pos }} gl={{ antialias: true }}>
+        <Canvas
+            shadows
+            dpr={[1, 1.5]}
+            frameloop={paused ? 'never' : 'always'}
+            camera={{ fov: 45, near: 0.1, far: 100, position: PRESETS.home.pos }}
+            gl={{ antialias: true }}
+        >
             <color attach="background" args={['#05060c']} />
             <fog attach="fog" args={['#05060c', 16, 34]} />
             <ambientLight intensity={1.7} color="#7a80c4" />
