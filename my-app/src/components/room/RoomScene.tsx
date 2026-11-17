@@ -15,7 +15,7 @@ const PRESETS: Record<'home' | RoomTarget, { pos: V3; look: V3 }> = {
     projects: { pos: [0.8, 2.4, 0.6], look: [-0.3, 1.95, -3.1] },
     skills: { pos: [-1.2, 2.3, 0.9], look: [-1.6, 1.3, -2.5] },
     career: { pos: [3.1, 3.2, 0.9], look: [3.1, 3.2, -3.95] },
-    guitar: { pos: [-2.4, 2.6, 0.2], look: [-3, 2.2, -3.9] },
+    guitar: { pos: [-2.7, 2.45, 1.3], look: [-3, 2.2, -3.9] },
     cosmos: { pos: [-2.1, 2.1, 2.0], look: [-3.9, 1.6, 0.2] },
     games: { pos: [1.8, 2.1, 0.6], look: [1.3, 1.2, -2.3] },
 }
@@ -25,7 +25,7 @@ const HOTSPOTS: Array<{ id: RoomTarget; label: string; pos: V3 }> = [
     { id: 'projects', label: 'Projects', pos: [-0.3, 2.75, -3.1] },
     { id: 'skills', label: 'Skills', pos: [-1.6, 2.1, -2.5] },
     { id: 'career', label: 'Career', pos: [3.1, 4.3, -3.9] },
-    { id: 'guitar', label: 'Guitar', pos: [-3, 2.9, -3.8] },
+    { id: 'guitar', label: 'Guitar', pos: [-3, 3.3, -3.8] },
     { id: 'cosmos', label: 'Cosmos', pos: [-3.8, 2.4, 0.3] },
     { id: 'games', label: 'Games', pos: [1.3, 1.9, -2.3] },
 ]
@@ -128,6 +128,103 @@ function Interactive({ id, api, children }: { id: RoomTarget; api: Api; children
             }}
         >
             {children}
+        </group>
+    )
+}
+
+/* ---------- the guitar ---------- */
+
+/** An acoustic guitar: extruded figure-eight body with a sunburst top, sound hole, bridge, fretted neck, headstock and strings. */
+function Guitar() {
+    const { geometry, sunburst } = useMemo(() => {
+        // body outline (x = width, y = height), mirrored left/right
+        const s = new THREE.Shape()
+        s.moveTo(0, 0.95)
+        s.bezierCurveTo(0.35, 0.95, 0.6, 0.8, 0.58, 0.5)
+        s.bezierCurveTo(0.56, 0.25, 0.36, 0.22, 0.4, -0.05)
+        s.bezierCurveTo(0.44, -0.3, 0.82, -0.25, 0.8, -0.55)
+        s.bezierCurveTo(0.78, -0.92, 0.35, -0.97, 0, -0.97)
+        s.bezierCurveTo(-0.35, -0.97, -0.78, -0.92, -0.8, -0.55)
+        s.bezierCurveTo(-0.82, -0.25, -0.44, -0.3, -0.4, -0.05)
+        s.bezierCurveTo(-0.36, 0.22, -0.56, 0.25, -0.58, 0.5)
+        s.bezierCurveTo(-0.6, 0.8, -0.35, 0.95, 0, 0.95)
+        const geo = new THREE.ExtrudeGeometry(s, {
+            depth: 0.2,
+            bevelEnabled: true,
+            bevelThickness: 0.03,
+            bevelSize: 0.03,
+            bevelSegments: 3,
+            curveSegments: 40,
+        })
+        // sunburst top, centred on the sound hole
+        const c = document.createElement('canvas')
+        c.width = c.height = 512
+        const g = c.getContext('2d')
+        if (g) {
+            const gr = g.createRadialGradient(256, 230, 10, 256, 260, 340)
+            gr.addColorStop(0, '#f4bf6e')
+            gr.addColorStop(0.45, '#d98a3a')
+            gr.addColorStop(1, '#4a2410')
+            g.fillStyle = gr
+            g.fillRect(0, 0, 512, 512)
+        }
+        const tex = new THREE.CanvasTexture(c)
+        tex.colorSpace = THREE.SRGBColorSpace
+        // the extruded caps use the outline coordinates as UVs: fit the texture to the outline's bounds
+        tex.repeat.set(1 / 1.7, 1 / 2.0)
+        tex.offset.set(0.85 / 1.7, 1.0 / 2.0)
+        return { geometry: geo, sunburst: tex }
+    }, [])
+
+    const fretboard = '#1c120c'
+    const gold = '#d9b45a'
+    const fretYs = useMemo(() => Array.from({ length: 8 }, (_, i) => 2.37 - 3.5 * (1 - Math.pow(2, -(i + 1) / 12))), [])
+
+    return (
+        <group position={[-3, 1.7, -3.85]} rotation={[0, 0, 0.06]} scale={0.9}>
+            {/* body */}
+            <mesh geometry={geometry} position={[0, 0, -0.12]} castShadow receiveShadow>
+                <meshStandardMaterial attach="material-0" map={sunburst} roughness={0.35} />
+                <meshStandardMaterial attach="material-1" color="#7a3d14" roughness={0.45} />
+            </mesh>
+            {/* sound hole and rosette */}
+            <mesh position={[0, 0.08, 0.116]}>
+                <circleGeometry args={[0.2, 40]} />
+                <meshBasicMaterial color="#0d0704" />
+            </mesh>
+            <mesh position={[0, 0.08, 0.117]}>
+                <ringGeometry args={[0.2, 0.235, 40]} />
+                <meshBasicMaterial color="#2a1608" />
+            </mesh>
+            <mesh position={[0, 0.08, 0.117]}>
+                <ringGeometry args={[0.25, 0.265, 40]} />
+                <meshBasicMaterial color="#e8d6a8" />
+            </mesh>
+            {/* bridge */}
+            <B size={[0.52, 0.07, 0.05]} pos={[0, -0.52, 0.135]} color="#2a1608" rough={0.5} />
+            <B size={[0.42, 0.018, 0.02]} pos={[0, -0.49, 0.162]} color="#f0e6cc" rough={0.4} />
+            {/* neck, fretboard, nut, frets */}
+            <B size={[0.17, 1.5, 0.1]} pos={[0, 1.65, 0.06]} color="#3b2416" rough={0.5} />
+            <B size={[0.15, 1.45, 0.025]} pos={[0, 1.68, 0.12]} color={fretboard} rough={0.5} />
+            <B size={[0.16, 0.022, 0.035]} pos={[0, 2.39, 0.135]} color="#efe6cf" rough={0.4} />
+            {fretYs.map((y, i) => (
+                <B key={i} size={[0.16, 0.012, 0.012]} pos={[0, y, 0.135]} color="#d9d6f0" metal={0.7} rough={0.3} shadow={false} />
+            ))}
+            {[2, 4, 6].map((i) => (
+                <Cyl key={i} r1={0.016} r2={0.016} h={0.01} pos={[0, (fretYs[i - 1] + fretYs[i]) / 2, 0.135]} rot={[Math.PI / 2, 0, 0]} color="#e8e6f2" seg={12} />
+            ))}
+            {/* headstock and tuning pegs */}
+            <B size={[0.27, 0.46, 0.06]} pos={[0, 2.62, 0.05]} rot={[-0.12, 0, 0]} color="#2a1608" rough={0.5} />
+            {[2.5, 2.62, 2.74].map((y) => (
+                <React.Fragment key={y}>
+                    <Cyl r1={0.018} r2={0.018} h={0.1} pos={[-0.15, y, 0.07]} rot={[0, 0, Math.PI / 2]} color={gold} metal={0.7} rough={0.3} seg={10} />
+                    <Cyl r1={0.018} r2={0.018} h={0.1} pos={[0.15, y, 0.07]} rot={[0, 0, Math.PI / 2]} color={gold} metal={0.7} rough={0.3} seg={10} />
+                </React.Fragment>
+            ))}
+            {/* strings, from the saddle to the nut */}
+            {[0, 1, 2, 3, 4, 5].map((i) => (
+                <Rod key={i} a={[-0.1 + i * 0.04, -0.49, 0.172]} b={[-0.055 + i * 0.022, 2.38, 0.148]} r={0.0035} color="#e8e6f2" />
+            ))}
         </group>
     )
 }
@@ -305,8 +402,6 @@ function Room({ api }: { api: Api }) {
     const wood = '#4a3a78'
     const dark = '#1c1b3c'
     const fm = '#cfc8ee'
-    const guitarWood = '#d9863a'
-    const neck = '#3b2416'
     const telescopeTop: V3 = [-3.8, 1.3, 0.3]
 
     return (
@@ -420,26 +515,8 @@ function Room({ api }: { api: Api }) {
 
             {/* guitar */}
             <Interactive id="guitar" api={api}>
-                <Hit pos={[-3, 2, -3.8]} r={1.3} />
-                <Sph r={1} pos={[-3.1, 1.55, -3.85]} scale={[0.62, 0.7, 0.12]} color={guitarWood} rough={0.35} />
-                <Sph r={1} pos={[-2.98, 2.3, -3.85]} scale={[0.45, 0.5, 0.12]} color={guitarWood} rough={0.35} />
-                <mesh position={[-3.05, 1.85, -3.72]}>
-                    <circleGeometry args={[0.17, 24]} />
-                    <meshBasicMaterial color="#120a05" />
-                </mesh>
-                <mesh position={[-3.05, 1.85, -3.719]}>
-                    <ringGeometry args={[0.18, 0.22, 24]} />
-                    <meshBasicMaterial color="#3b2416" />
-                </mesh>
-                <B size={[0.3, 0.05, 0.03]} pos={[-3.07, 1.45, -3.72]} color={neck} />
-                <B size={[0.14, 1.75, 0.08]} pos={[-2.9, 3.1, -3.85]} color={neck} />
-                <B size={[0.24, 0.42, 0.06]} pos={[-2.9, 4.2, -3.85]} color={neck} />
-                {[0, 1, 2, 3, 4, 5].map((s) => (
-                    <mesh key={s} position={[-2.97 + s * 0.012, 2.85, -3.79]}>
-                        <boxGeometry args={[0.004, 2.7, 0.01]} />
-                        <meshBasicMaterial color="#e8e6f2" />
-                    </mesh>
-                ))}
+                <Hit pos={[-3, 2.5, -3.8]} r={1.7} />
+                <Guitar />
             </Interactive>
 
             {/* telescope */}
@@ -543,9 +620,11 @@ type Props = {
     /** Stop rendering (e.g. while an opaque panel covers the scene) to save the GPU and keep the UI smooth. */
     paused?: boolean
     onSelect: (id: RoomTarget) => void
+    /** Called when the visitor clicks the scene where there is no object. */
+    onBackgroundClick?: () => void
 }
 
-export default function RoomScene({ focus, reducedMotion, paused = false, onSelect }: Props) {
+export default function RoomScene({ focus, reducedMotion, paused = false, onSelect, onBackgroundClick }: Props) {
     const [hover, setHover] = useState<RoomTarget | null>(null)
     const refs = useRef<Partial<Record<RoomTarget, THREE.Group | null>>>({})
     const labels = useRef<Partial<Record<RoomTarget, HTMLButtonElement | null>>>({})
@@ -574,6 +653,7 @@ export default function RoomScene({ focus, reducedMotion, paused = false, onSele
             shadows
             dpr={[1, 1.5]}
             frameloop={paused ? 'never' : 'always'}
+            onPointerMissed={() => onBackgroundClick?.()}
             camera={{ fov: 45, near: 0.1, far: 100, position: PRESETS.home.pos }}
             gl={{ antialias: true }}
         >

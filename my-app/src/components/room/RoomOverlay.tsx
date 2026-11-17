@@ -200,7 +200,18 @@ export default function RoomOverlay({ onClose, onNavigate }: Props) {
             className="fixed inset-0 z-[1000] bg-[#05060c] text-white"
         >
             <div className="absolute inset-0">
-                {supported === true && <RoomScene focus={focus} reducedMotion={reduced} paused={!!panel} onSelect={select} />}
+                {supported === true && (
+                    <RoomScene
+                        focus={focus}
+                        reducedMotion={reduced}
+                        paused={!!panel}
+                        onSelect={select}
+                        // clicking an empty part of the scene closes the hobby card, like the back button
+                        onBackgroundClick={() => {
+                            if (hobby) back()
+                        }}
+                    />
+                )}
 
                 {supported === false && !panel && (
                     <div className="mx-auto flex h-full max-w-md flex-col justify-center gap-3 px-6">
@@ -245,6 +256,16 @@ export default function RoomOverlay({ onClose, onNavigate }: Props) {
                         ← Back to the room
                     </button>
                 </div>
+            )}
+
+            {/* Clicking the scene around an open panel goes back to the room (same as the back button).
+                Keyboard users have the back button and Escape. */}
+            {panel && (
+                <div
+                    aria-hidden="true"
+                    onClick={back}
+                    className="absolute inset-0 z-[5] cursor-pointer bg-black/50"
+                />
             )}
 
             {/* a section of my profile, opened from an object of the room */}
