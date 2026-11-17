@@ -1,5 +1,6 @@
 import { skillsData } from "./data";
 import { CONTACT_EMAIL } from "./contact";
+import { SOCIAL } from "./site";
 
 /**
  * Single source of truth for the "who am I" content.
@@ -12,8 +13,8 @@ export const profile = {
   name: "Achraf Bougattaya",
   email: CONTACT_EMAIL,
   cv: "/ACHRAF-BOUGATTAYA-CV_EN.pdf",
-  linkedin: "https://www.linkedin.com/in/achraf-bougattaya-747320177/",
-  github: "https://github.com/achadr?tab=repositories",
+  linkedin: SOCIAL.linkedin,
+  github: SOCIAL.github,
   pitch:
     "From internal management tools to geospatial platforms, I build interactive web apps and map visualisations with React and TypeScript.",
   facts: [

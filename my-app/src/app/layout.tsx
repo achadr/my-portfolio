@@ -6,6 +6,7 @@ import ActiveSectionContextProvider from "../../context/active-section";
 import FocusContextProvider from "../../context/focus";
 import ToasterProvider from "../components/ToasterProvider";
 import AnimatedBackground from "../components/AnimatedBackground";
+import { KNOWS_ABOUT, SITE, SITE_URL, SOCIAL } from "../../lib/site";
 
 
 const geistSans = localFont({
@@ -20,27 +21,48 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Achraf BOUGATTAYA | Personal Portfolio",
-  description: "Achraf is a front-end developer with 4+ years of experience specializing in React,Node.js, Next.js, and modern web technologies.",
-  keywords: ["Achraf BOUGATTAYA", "Front-end Developer", "React Developer", "Next.js","Node.js", "Web Developer", "Portfolio"],
-  authors: [{ name: "Achraf BOUGATTAYA" }],
+  // Every relative URL below (canonical, share image...) is resolved against the real site address.
+  metadataBase: new URL(SITE_URL),
+  title: SITE.title,
+  description: SITE.description,
+  keywords: [...SITE.keywords],
+  authors: [{ name: SITE.name, url: SITE_URL }],
+  creator: SITE.name,
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://achrafbougattaya.com",
-    title: "Achraf BOUGATTAYA | Personal Portfolio",
-    description: "Front-end developer with 4+ years of experience specializing in React, Next.js, and modern web technologies.",
-    siteName: "Achraf BOUGATTAYA Portfolio",
+    url: "/",
+    title: SITE.title,
+    description: SITE.shortDescription,
+    siteName: `${SITE.name} Portfolio`,
+    // the image comes from src/app/opengraph-image.tsx
   },
   twitter: {
     card: "summary_large_image",
-    title: "Achraf BOUGATTAYA | Personal Portfolio",
-    description: "Front-end developer with 4+ years of experience specializing in React, Next.js, and modern web technologies.",
+    title: SITE.title,
+    description: SITE.shortDescription,
+    // the image comes from src/app/twitter-image.tsx
   },
   robots: {
     index: true,
     follow: true,
   },
+};
+
+// Structured data: tells search engines who this site is about.
+const personJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  name: SITE.name,
+  jobTitle: SITE.role,
+  url: SITE_URL,
+  image: `${SITE_URL}/me.png`,
+  description: SITE.shortDescription,
+  sameAs: [SOCIAL.linkedin, SOCIAL.github],
+  knowsAbout: [...KNOWS_ABOUT],
 };
 
 export const viewport = {
@@ -60,6 +82,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50 text-gray-950 pt-28 sm:pt-36`}
       >
+        <script
+          type="application/ld+json"
+          // "<" is escaped so the data can never close the script tag early
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(personJsonLd).replace(/</g, "\\u003c") }}
+        />
         <AnimatedBackground />
         <a
           href="#home"
