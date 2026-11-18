@@ -32,7 +32,7 @@ const HOTSPOTS: Array<{ id: RoomTarget; label: string; pos: V3 }> = [
     { id: 'contact', label: 'Contact', pos: [0.6, 1.55, -1.95] },
 ]
 
-const PROJECT_COLORS = ['#7a8cff', '#ff8f6b', '#5fd6b0', '#e4b5ff']
+const PROJECT_COLORS = ['#ff6b8a', '#7a8cff', '#ff8f6b', '#5fd6b0', '#e4b5ff']
 
 /* ---------- small helpers ---------- */
 
@@ -334,19 +334,23 @@ function Room({ api }: { api: Api }) {
         g.fillStyle = '#e8e6f2'
         g.font = 'bold 15px sans-serif'
         g.fillText('Projects', 12, 18)
-        projectsData.slice(0, 4).forEach((p, i) => {
-            const x = 12 + (i % 2) * 160
-            const y = 40 + Math.floor(i / 2) * 70
+        // One row per project, so the screen holds all of them (up to 5 at this size).
+        const rows = projectsData.slice(0, 5)
+        const rowH = Math.floor((h - 34) / rows.length)
+        rows.forEach((p, i) => {
+            const y = 32 + i * rowH
             g.fillStyle = '#12142e'
-            g.fillRect(x, y, 150, 60)
+            g.fillRect(12, y, w - 24, rowH - 4)
             g.fillStyle = PROJECT_COLORS[i % PROJECT_COLORS.length]
-            g.fillRect(x, y, 150, 5)
+            g.fillRect(12, y, 5, rowH - 4)
             g.fillStyle = '#e8e6f2'
             g.font = 'bold 12px sans-serif'
-            g.fillText(p.title, x + 8, y + 26)
+            g.fillText(p.title, 24, y + rowH / 2 + 2)
             g.fillStyle = '#9a98b4'
             g.font = '10px sans-serif'
-            g.fillText(p.tags.slice(0, 2).join(' · '), x + 8, y + 44)
+            g.textAlign = 'right'
+            g.fillText(p.tags.slice(0, 2).join(' · '), w - 20, y + rowH / 2 + 2)
+            g.textAlign = 'left'
         })
     })
     const laptopTex = useCanvasTexture(172, 104, (g, w, h) => {

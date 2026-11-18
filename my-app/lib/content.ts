@@ -19,7 +19,7 @@ export const profile = {
     "From internal management tools to geospatial platforms, I build interactive web apps and map visualisations with React and TypeScript.",
   facts: [
     "React · TypeScript · Next.js",
-    "DeckGL · Mapbox · D3.js",
+    "DeckGL · Mapbox · Three.js",
     "Node.js · MongoDB · GraphQL",
     "Geotwin · 2021–2024",
   ],
@@ -60,11 +60,11 @@ export const skillGroups: readonly SkillGroup[] = [
   },
   {
     id: "maps",
-    name: "Maps & data viz",
-    short: "Maps & viz",
+    name: "3D, maps & data viz",
+    short: "3D & viz",
     color: "#9333ea",
-    tagline: "Interactive maps and readable charts for dense data.",
-    skills: ["DeckGL", "Mapbox", "Recharts", "D3.js"],
+    tagline: "3D scenes, interactive maps and readable charts for dense data.",
+    skills: ["Three.js", "React Three Fiber", "DeckGL", "Mapbox", "Recharts", "D3.js", "uPlot"],
   },
   {
     id: "backend",
@@ -72,7 +72,7 @@ export const skillGroups: readonly SkillGroup[] = [
     short: "Back-end",
     color: "#059669",
     tagline: "APIs and databases that feed the interface.",
-    skills: ["Node.js", "MongoDB", "GraphQL", "Apollo", "Python", "Git"],
+    skills: ["Node.js", "MongoDB", "GraphQL", "Apollo", "Python", "Git", "Vitest"],
   },
 ];
 

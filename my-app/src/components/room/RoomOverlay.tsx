@@ -10,6 +10,7 @@ import clsx from 'clsx'
 import { useFocus } from '../../../context/focus'
 import type { SkillName } from '../../../lib/content'
 import { CONTACT_EMAIL } from '../../../lib/contact'
+import { projectsData } from '../../../lib/data'
 
 // The 3D scene (three.js) is only downloaded when the room is opened.
 const RoomScene = dynamic(() => import('./RoomScene'), {
@@ -51,7 +52,7 @@ const HOBBIES: Partial<Record<RoomTarget, { title: string; text: string }>> = {
 }
 
 const LINKS: Array<{ id: PanelId; label: string; hint: string }> = [
-    { id: 'projects', label: 'Projects', hint: 'Four applications, online' },
+    { id: 'projects', label: 'Projects', hint: `${projectsData.length} applications, online` },
     { id: 'skills', label: 'Skills', hint: 'An interactive skill tree' },
     { id: 'career', label: 'Career', hint: 'A map and a timeline of my path' },
     { id: 'contact', label: 'Contact', hint: 'Send me a message' },

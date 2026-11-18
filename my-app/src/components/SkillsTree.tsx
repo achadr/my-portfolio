@@ -16,7 +16,8 @@ const H = 540
 const CX = 400
 const CY = 262
 // Where each group sits around the centre (degrees, 0 = right, -90 = up).
-const GROUP_ANGLES = [-140, -40, 90]
+// The two top groups are spread wide enough for 9 and 7 skills without their labels meeting.
+const GROUP_ANGLES = [-155, -25, 90]
 
 /**
  * Selecting a skill makes the related projects and career steps appear as
@@ -33,13 +34,17 @@ type Branch = {
     leaves: Leaf[]
 }
 
+// Coordinates are rounded: Node (server) and the browser can disagree on the last
+// decimals of Math.cos / Math.sin, which would break hydration.
+const r2 = (v: number) => Math.round(v * 100) / 100
+
 function buildLayout(): Branch[] {
     return skillGroups.map((group, gi) => {
         const angle = (GROUP_ANGLES[gi] * Math.PI) / 180
-        const x = CX + 125 * Math.cos(angle)
-        const y = CY + 118 * Math.sin(angle)
+        const x = r2(CX + 125 * Math.cos(angle))
+        const y = r2(CY + 118 * Math.sin(angle))
         const n = group.skills.length
-        const spread = n > 7 ? 2.4 : n > 4 ? 2.0 : 1.5
+        const spread = n > 6 ? 2.4 : n > 4 ? 2.0 : 1.5
         // Crowded groups alternate between an inner and an outer ring so labels never collide.
         const inner = n >= 6 ? 98 : 105
         const outer = n > 7 ? 156 : 138
@@ -48,8 +53,8 @@ function buildLayout(): Branch[] {
             const r = n >= 6 && i % 2 === 1 ? outer : inner
             return {
                 skill,
-                x: x + r * Math.cos(phi),
-                y: y + r * Math.sin(phi),
+                x: r2(x + r * Math.cos(phi)),
+                y: r2(y + r * Math.sin(phi)),
                 right: Math.cos(phi) >= 0,
             }
         })

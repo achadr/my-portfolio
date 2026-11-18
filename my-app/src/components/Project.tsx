@@ -41,7 +41,7 @@ export default function Project({
                             className='bg-gray-100 border border-black/5 rounded-lg overflow-hidden hover:bg-gray-200 transition
                                        w-full max-w-[42rem] mx-auto
                                        flex flex-col
-                                       sm:flex-row sm:h-[20rem]
+                                       sm:flex-row sm:min-h-[20rem]
                                        group-even:sm:flex-row-reverse'>
 
                             {/* Content Section */}
@@ -72,11 +72,12 @@ export default function Project({
                             </div>
 
                             {/* Image Section */}
+                            {/* The image fills the height set by the text, so a longer description or more tags never get cut */}
                             <div className="relative w-full h-48
-                                            sm:w-1/2 sm:h-full
+                                            sm:w-1/2 sm:h-auto
                                             overflow-hidden">
                                 <Image
-                                    className='w-full h-full object-cover object-top
+                                    className='absolute inset-0 w-full h-full object-cover object-top
                                                group-hover:scale-[1.04]
                                                group-hover:-translate-x-3
                                                group-hover:translate-y-3

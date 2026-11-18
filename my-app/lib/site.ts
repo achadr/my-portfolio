@@ -33,6 +33,7 @@ export const SITE = {
     "Next.js",
     "DeckGL",
     "Mapbox",
+    "Three.js",
     "Data visualization",
     "Portfolio",
   ],
@@ -53,5 +54,7 @@ export const KNOWS_ABOUT = [
   "DeckGL",
   "Mapbox",
   "D3.js",
+  "Three.js",
+  "React Three Fiber",
   "Data visualization",
 ] as const;

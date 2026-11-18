@@ -6,6 +6,7 @@ import mcpHubImg from "../public/mcp-hub.png";
 import cvMakerImg from "../public/cv-maker.png";
 import cityAnalyzerImg from "../public/city-analyzer.png";
 import gitInsightsImg from "../public/git-insights.png";
+import ecg3dImg from "../public/ecg-3d.png";
 
 export const links = [
   {
@@ -95,6 +96,14 @@ export const experiencesData = [
 
 export const projectsData = [
   {
+    title: "ECG 3D Visualization",
+    description:
+      "Medical visualization prototype: a real-time 3D point cloud around a heart, with point selection and pinning, and a 500 Hz ECG monitor. One instanced mesh, tested with Vitest.",
+    tags: ["React", "TypeScript", "Three.js", "React Three Fiber", "uPlot", "Vitest"],
+    imageUrl: ecg3dImg,
+    url: "https://ecg-3d-visualization.vercel.app/",
+  },
+  {
     title: "GitInsights",
     description:
       "AI-powered repository analysis dashboard providing insights about code quality, security, and performance with intelligent file analysis and detailed reporting.",
@@ -147,5 +156,9 @@ export const skillsData = [
   "DeckGL",
   "Mapbox",
   "Recharts",
-  "D3.js"
+  "D3.js",
+  "Three.js",
+  "React Three Fiber",
+  "uPlot",
+  "Vitest"
 ] as const;
