@@ -15,6 +15,8 @@ const W = 800
 const H = 540
 const CX = 400
 const CY = 262
+/** Size of the tree drawing, shared with the small preview of the explorer card. */
+export const TREE_VIEW = { W, H, CX, CY } as const
 // Where each group sits around the centre (degrees, 0 = right, -90 = up).
 // The two top groups are spread wide enough for 9 and 7 skills without their labels meeting.
 const GROUP_ANGLES = [-155, -25, 90]
@@ -38,7 +40,7 @@ type Branch = {
 // decimals of Math.cos / Math.sin, which would break hydration.
 const r2 = (v: number) => Math.round(v * 100) / 100
 
-function buildLayout(): Branch[] {
+export function buildLayout(): Branch[] {
     return skillGroups.map((group, gi) => {
         const angle = (GROUP_ANGLES[gi] * Math.PI) / 180
         const x = r2(CX + 125 * Math.cos(angle))

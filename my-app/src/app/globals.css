@@ -40,3 +40,17 @@ html {
     .bg-twinkle, .bg-float, .bg-orb { animation: none; }
     .bg-float { opacity: 0; }
 }
+
+/* Explorer cards (ExplorerCards.tsx): hidden until their entrance starts, so they never flash.
+   Only when JavaScript runs (html.js); after 4 s they show anyway, in case the script fails. */
+@keyframes xcards-fallback {
+    to { opacity: 1; }
+}
+.js .xcards:not(.is-ready) .xcard {
+    opacity: 0;
+    animation: xcards-fallback 0.3s 4s forwards;
+}
+.xnode {
+    transform-box: fill-box;
+    transform-origin: center;
+}

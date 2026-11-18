@@ -79,10 +79,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="!scroll-smooth">
+    // suppressHydrationWarning: the inline script below adds the "js" class before React hydrates
+    <html lang="en" className="!scroll-smooth" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50 text-gray-950 pt-28 sm:pt-36`}
       >
+        {/* Marks that JavaScript runs, before the first paint: lets the explorer cards hide until their entrance. */}
+        <script dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }} />
         <script
           type="application/ld+json"
           // "<" is escaped so the data can never close the script tag early
