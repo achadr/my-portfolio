@@ -71,9 +71,11 @@ type Props = {
     onClose: () => void
     /** Leave the room and scroll to a section of the regular page. */
     onNavigate: (section: SectionId) => void
+    /** Object to fly to as soon as the room is ready (a panel or a hobby). */
+    initialFocus?: RoomTarget
 }
 
-export default function RoomOverlay({ onClose, onNavigate }: Props) {
+export default function RoomOverlay({ onClose, onNavigate, initialFocus }: Props) {
     const rootRef = useRef<HTMLDivElement>(null)
     const closeRef = useRef<HTMLButtonElement>(null)
     const panelRef = useRef<HTMLDivElement>(null)
@@ -174,6 +176,15 @@ export default function RoomOverlay({ onClose, onNavigate }: Props) {
         },
         [openPanel]
     )
+
+    // Opened on a given object (e.g. a hobby link): go there once we know whether WebGL works,
+    // so the camera flies to it and the panel waits for the flight like a normal click.
+    const started = useRef(false)
+    useEffect(() => {
+        if (started.current || supported === null || !initialFocus) return
+        started.current = true
+        select(initialFocus)
+    }, [supported, initialFocus, select])
 
     const back = useCallback(() => {
         if (timer.current) clearTimeout(timer.current)

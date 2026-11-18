@@ -4,6 +4,7 @@ import "./globals.css";
 import Header from "../components/Header";
 import ActiveSectionContextProvider from "../../context/active-section";
 import FocusContextProvider from "../../context/focus";
+import RoomContextProvider from "../../context/room";
 import ToasterProvider from "../components/ToasterProvider";
 import AnimatedBackground from "../components/AnimatedBackground";
 import { KNOWS_ABOUT, SITE, SITE_URL, SOCIAL } from "../../lib/site";
@@ -96,8 +97,10 @@ export default function RootLayout({
         </a>
         <ActiveSectionContextProvider>
           <FocusContextProvider>
-            <Header/>
-            {children}
+            <RoomContextProvider>
+              <Header/>
+              {children}
+            </RoomContextProvider>
           </FocusContextProvider>
         </ActiveSectionContextProvider>
         <ToasterProvider />
