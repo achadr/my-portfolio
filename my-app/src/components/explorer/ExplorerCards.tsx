@@ -64,6 +64,11 @@ export default function ExplorerCards() {
         stopLive.current = A && root && !reducedMotion() ? startLive(A, root, videoRef.current) : null
     }
     const [open, setOpen] = useState<CardId | null>(null)
+    // "is-ready" lifts the pre-entrance hiding (globals.css). It must be part of the className
+    // React renders: a class added by hand would be wiped out at the next render.
+    const [ready, setReady] = useState(false)
+    // content of the open card (real map / tree): shown once the card has reached its size
+    const [contentShown, setContentShown] = useState(true)
     const [selectedSkill, setSelectedSkill] = useState<SkillName | null>(null)
     const { openRoom } = useRoom()
 
@@ -73,7 +78,7 @@ export default function ExplorerCards() {
         if (!root) return
         let cancelled = false
         const stops: Array<() => void> = []
-        const reveal = () => root.classList.add('is-ready')
+        const reveal = () => setReady(true)
 
         import('animejs')
             .then((A) => {
@@ -82,26 +87,15 @@ export default function ExplorerCards() {
                 const reduced = reducedMotion()
                 if (!reduced) layout.current = A.createLayout(root, { children: '.xcard', duration: 600, ease: 'inOut(3)' })
 
-                // The entrance plays once per visit (tab session).
-                let seen = false
-                try {
-                    seen = sessionStorage.getItem('xcards-intro') === '1'
-                } catch {
-                    // storage unavailable (private mode...): play the entrance every time
-                }
-
-                if (reduced || seen) {
+                // The entrance plays on every page load, except for visitors who prefer reduced motion.
+                if (reduced) {
                     reveal()
-                    restartLive()
                     return
                 }
                 const tl = entrance(A, root)
                 reveal()
                 tl.then(() => {
                     if (cancelled) return
-                    try {
-                        sessionStorage.setItem('xcards-intro', '1')
-                    } catch {}
                     clearEntranceStyles(root)
                     restartLive()
                 })
@@ -126,13 +120,18 @@ export default function ExplorerCards() {
         if (layout.current) {
             layout.current.record()
             pendingLayout.current = true
+            // the real map / tree stay invisible while the card grows: the layout animation
+            // stretches them during the transition, which looks broken
+            setContentShown(false)
         }
         setOpen(next)
     }
     useLayoutEffect(() => {
         if (pendingLayout.current && layout.current) {
             pendingLayout.current = false
-            layout.current.animate()
+            layout.current.animate().then(() => setContentShown(true))
+        } else {
+            setContentShown(true)
         }
         if (focusAfter.current) {
             const id = focusAfter.current
@@ -168,7 +167,7 @@ export default function ExplorerCards() {
     return (
         <section aria-label="Explore my profile" className="mx-auto mt-14 hidden w-full max-w-[56rem] md:block">
             <h2 className="mb-4 text-center text-sm font-medium uppercase tracking-wider text-gray-600">Explore my profile</h2>
-            <div ref={rootRef} className={clsx('xcards grid gap-3', open ? 'grid-cols-2' : 'grid-cols-3')}>
+            <div ref={rootRef} className={clsx('xcards grid gap-3', ready && 'is-ready', open ? 'grid-cols-2' : 'grid-cols-3')}>
                 {CARDS.map((c) => {
                     const state = open === c.id ? 'open' : open ? 'compact' : 'closed'
                     return (
@@ -201,18 +200,20 @@ export default function ExplorerCards() {
                                     <div
                                         className={clsx(
                                             'xpv relative overflow-hidden bg-[#0e1226]',
-                                            state === 'closed' ? 'min-h-0 flex-1' : 'h-full w-[5.5rem] shrink-0'
+                                            // same image height on every card, whatever the length of its text
+                                            state === 'closed' ? 'h-[8.5rem] shrink-0' : 'h-full w-[5.5rem] shrink-0'
                                         )}
                                     >
                                         {c.id === 'career' && <MiniCareerMap />}
                                         {c.id === 'skills' && <MiniSkillTree />}
                                         {c.id === 'room' && <RoomPreview ref={videoRef} />}
                                     </div>
-                                    <div className={clsx('flex', state === 'closed' ? 'flex-col gap-1 px-4 pb-4 pt-3' : 'flex-1 items-center gap-3 px-4')}>
+                                    <div className={clsx('flex', state === 'closed' ? 'flex-1 flex-col gap-1 px-4 pb-4 pt-3' : 'flex-1 items-center gap-3 px-4')}>
                                         <h3 className="xttl whitespace-nowrap text-lg font-semibold">{c.title}</h3>
                                         {state === 'closed' && (
                                             <>
-                                                <p className="xpr text-sm text-gray-600">{c.promise}</p>
+                                                {/* always two lines tall, so the stats and the action line up across the cards */}
+                                                <p className="xpr line-clamp-2 min-h-[2.5rem] text-sm text-gray-600">{c.promise}</p>
                                                 <p className="xst font-mono text-xs text-gray-500">
                                                     {c.stats.map((s, i) => (
                                                         <React.Fragment key={s.text}>
@@ -251,7 +252,7 @@ export default function ExplorerCards() {
                                             Close <BsXLg aria-hidden="true" />
                                         </button>
                                     </div>
-                                    <div className="p-4 sm:p-6">
+                                    <div className={clsx('p-4 transition-opacity duration-300 sm:p-6', !contentShown && 'opacity-0')}>
                                         {c.id === 'career' && <CareerMap jumpTo={null} />}
                                         {c.id === 'skills' && (
                                             <>
