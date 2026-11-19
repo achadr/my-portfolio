@@ -1,7 +1,7 @@
 "use client"
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import clsx from 'clsx'
-import { BsPauseFill, BsPlayFill } from 'react-icons/bs'
+import { BsChevronLeft, BsChevronRight, BsPauseFill, BsPlayFill } from 'react-icons/bs'
 import { careerPath, careerSpans, TIMELINE_FROM, TIMELINE_TO } from '../../lib/content'
 import { experiencesData } from '../../lib/data'
 import { LAND, MAP_H, MAP_W, project } from '../../lib/geo'
@@ -168,6 +168,7 @@ export default function CareerMap({ jumpTo }: Props) {
     // A stop becomes the active one when the dot arrives on it.
     const active = Math.min(LAST, Math.floor(progress + 1e-6))
     const year = yearAt(progress)
+    const canPlayFromHere = progress > 0.01 && active < LAST
 
     // glowing dot follows the route
     useEffect(() => {
@@ -209,18 +210,19 @@ export default function CareerMap({ jumpTo }: Props) {
         })
     }
 
-    const startPlayback = () => {
+    /** Plays the path from a given stop (the first one by default) to the last one. */
+    const startPlayback = (from = 0) => {
         stopAnimation()
-        setProgress(0)
+        setProgress(from)
         if (reduceMotion()) return
         setStatus('playing')
         import('animejs').then(({ animate }) => {
-            const state = { p: 0 }
-            // hold on the first stop, then (travel, hold) for each following stop
+            const state = { p: from }
+            // hold on the starting stop, then (travel, hold) for each following stop
             const keyframes: Array<{ to: number; duration: number; ease?: string }> = [
-                { to: 0, duration: holdFor(0) },
+                { to: from, duration: holdFor(from) },
             ]
-            for (let i = 1; i < N; i++) {
+            for (let i = from + 1; i < N; i++) {
                 keyframes.push({ to: i, duration: TRAVEL_MS, ease: 'inOutQuad' })
                 keyframes.push({ to: i, duration: holdFor(i) })
             }
@@ -243,7 +245,35 @@ export default function CareerMap({ jumpTo }: Props) {
             anim.current.play()
             setStatus('playing')
         } else {
-            startPlayback()
+            // after stepping or scrubbing, play on from the current stop; from the end, start over
+            startPlayback(canPlayFromHere ? active : 0)
+        }
+    }
+
+    // --- step by step, and a time scrubber ---
+    const between = progress - active > 0.01 // the dot is travelling between two stops
+    const prevStop = () => goToStop(between ? active : Math.max(0, active - 1))
+    const nextStop = () => goToStop(Math.min(LAST, active + 1))
+    const onScrub = (value: number) => {
+        stopAnimation()
+        setProgress(value)
+    }
+    // Arrow keys move one whole step (the native step of the range is far too small for that).
+    const onScrubKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        const actions: Record<string, () => void> = {
+            ArrowLeft: prevStop,
+            ArrowDown: prevStop,
+            PageDown: prevStop,
+            ArrowRight: nextStop,
+            ArrowUp: nextStop,
+            PageUp: nextStop,
+            Home: () => goToStop(0),
+            End: () => goToStop(LAST),
+        }
+        const action = actions[e.key]
+        if (action) {
+            e.preventDefault()
+            action()
         }
     }
 
@@ -369,9 +399,46 @@ export default function CareerMap({ jumpTo }: Props) {
                         ) : status === 'paused' ? (
                             <><BsPlayFill aria-hidden="true" className="text-xl" />Resume</>
                         ) : (
-                            <><BsPlayFill aria-hidden="true" className="text-xl" />Play my path</>
+                            <><BsPlayFill aria-hidden="true" className="text-xl" />{canPlayFromHere ? 'Play from here' : 'Play my path'}</>
                         )}
                     </button>
+                </div>
+
+                {/* step by step, or drag the handle to travel in time (arrow keys move one step) */}
+                <div className="flex items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={prevStop}
+                        disabled={progress < 0.01}
+                        aria-label="Previous step"
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-black/10 bg-white transition hover:border-gray-900/40 disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-gray-900"
+                    >
+                        <BsChevronLeft aria-hidden="true" />
+                    </button>
+                    <input
+                        type="range"
+                        min={0}
+                        max={LAST}
+                        step={0.01}
+                        value={progress}
+                        onChange={(e) => onScrub(Number(e.target.value))}
+                        onKeyDown={onScrubKey}
+                        aria-label="Travel through my career"
+                        aria-valuetext={`${Math.floor(year)}, ${careerPath[active].label}`}
+                        className="h-2 min-w-0 flex-1 cursor-pointer accent-indigo-600"
+                    />
+                    <button
+                        type="button"
+                        onClick={nextStop}
+                        disabled={active >= LAST}
+                        aria-label="Next step"
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-black/10 bg-white transition hover:border-gray-900/40 disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-gray-900"
+                    >
+                        <BsChevronRight aria-hidden="true" />
+                    </button>
+                    <span className="w-10 shrink-0 text-right text-sm tabular-nums text-gray-600" aria-hidden="true">
+                        {active + 1}/{N}
+                    </span>
                 </div>
 
                 <CareerTimeline
