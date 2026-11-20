@@ -278,9 +278,9 @@ export default function TelescopePanel({ onContact }: Props) {
                                 <BsArrowLeft aria-hidden="true" />
                             </button>
                             {next ? (
-                                <button type="button" onClick={() => goTo(step + 1)} className={glowBtn}>
-                                    <span className="text-amber-200/70">Next stop</span>
-                                    <span className="font-medium">{next.object}</span>
+                                // the destination stays a surprise on screen; screen readers still hear where it goes
+                                <button type="button" onClick={() => goTo(step + 1)} aria-label={`Next stop: ${next.object}`} className={glowBtn}>
+                                    Next stop
                                     <BsArrowRight aria-hidden="true" className="transition group-hover:translate-x-0.5" />
                                 </button>
                             ) : (
