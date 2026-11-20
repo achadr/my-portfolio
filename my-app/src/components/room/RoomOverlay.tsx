@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
 import type { RoomTarget } from './RoomScene'
 import ProjectsPanel from './ProjectsPanel'
+import TelescopePanel from './telescope/TelescopePanel'
 import SkillsTree from '../SkillsTree'
 import CareerMap from '../CareerMap'
 import ContactForm from '../ContactForm'
@@ -22,31 +23,28 @@ const RoomScene = dynamic(() => import('./RoomScene'), {
     ),
 })
 
-type PanelId = 'projects' | 'skills' | 'career' | 'contact'
+type PanelId = 'projects' | 'skills' | 'career' | 'contact' | 'telescope'
 
 const PANEL_OF: Partial<Record<RoomTarget, PanelId>> = {
     projects: 'projects',
     skills: 'skills',
     career: 'career',
     contact: 'contact',
+    telescope: 'telescope',
 }
 const PANEL_TITLE: Record<PanelId, { title: string; object: string }> = {
     projects: { title: 'My projects', object: 'Monitor' },
     skills: { title: 'My skills', object: 'Laptop' },
     career: { title: 'My career', object: 'Wall map' },
     contact: { title: 'Contact me', object: 'Letter' },
-}
-
-const HOBBIES: Partial<Record<RoomTarget, { title: string; text: string }>> = {
-    guitar: { title: 'Guitar', text: "I'm currently on a mission to master the guitar." },
-    cosmos: { title: 'Cosmos', text: "I'm fascinated by the cosmos. It is the theme of this whole portfolio." },
-    games: { title: 'Video games', text: "I'm competitive in video games, which keeps my reflexes and attention to detail sharp." },
+    telescope: { title: 'Next horizon', object: 'Telescope' },
 }
 
 const LINKS: Array<{ id: PanelId; label: string; hint: string }> = [
     { id: 'projects', label: 'Projects', hint: `${projectsData.length} applications, online` },
     { id: 'skills', label: 'Skills', hint: 'An interactive skill tree' },
     { id: 'career', label: 'Career', hint: 'A map and a timeline of my path' },
+    { id: 'telescope', label: 'Horizon', hint: 'Where I am heading: from the pixel to the cloud' },
     { id: 'contact', label: 'Contact', hint: 'Send me a message' },
 ]
 
@@ -61,7 +59,7 @@ function webglAvailable() {
 
 type Props = {
     onClose: () => void
-    /** Object to fly to as soon as the room is ready (a panel or a hobby). */
+    /** Object to fly to as soon as the room is ready. */
     initialFocus?: RoomTarget
 }
 
@@ -81,8 +79,6 @@ export default function RoomOverlay({ onClose, initialFocus }: Props) {
     const { skill: skillRequest, experience: experienceRequest } = useFocus()
     // Requests made before the room opened are not ours: only react to new ones.
     const seen = useRef({ skill: skillRequest?.n ?? 0, experience: experienceRequest?.n ?? 0 })
-
-    const hobby = focus ? HOBBIES[focus] : undefined
 
     useEffect(() => {
         setSupported(webglAvailable())
@@ -162,12 +158,11 @@ export default function RoomOverlay({ onClose, initialFocus }: Props) {
         (id: RoomTarget) => {
             const p = PANEL_OF[id]
             if (p) openPanel(p)
-            else setFocus(id)
         },
         [openPanel]
     )
 
-    // Opened on a given object (e.g. a hobby link): go there once we know whether WebGL works,
+    // Opened on a given object (e.g. a link from the page): go there once we know whether WebGL works,
     // so the camera flies to it and the panel waits for the flight like a normal click.
     const started = useRef(false)
     useEffect(() => {
@@ -175,6 +170,13 @@ export default function RoomOverlay({ onClose, initialFocus }: Props) {
         started.current = true
         select(initialFocus)
     }, [supported, initialFocus, select])
+
+    // the telescope ends on "let's build what's next": straight to the letter
+    const openContact = useCallback(() => {
+        if (timer.current) clearTimeout(timer.current)
+        setFocus('contact')
+        setPanel('contact')
+    }, [])
 
     const back = useCallback(() => {
         if (timer.current) clearTimeout(timer.current)
@@ -186,7 +188,7 @@ export default function RoomOverlay({ onClose, initialFocus }: Props) {
     useEffect(() => {
         const onKey = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
-                if (panel || hobby) back()
+                if (panel) back()
                 else onClose()
             } else if (e.key === 'Tab') {
                 const nodes = rootRef.current?.querySelectorAll<HTMLElement>(
@@ -208,7 +210,9 @@ export default function RoomOverlay({ onClose, initialFocus }: Props) {
         }
         window.addEventListener('keydown', onKey)
         return () => window.removeEventListener('keydown', onKey)
-    }, [panel, hobby, back, onClose])
+    }, [panel, back, onClose])
+
+    const dark = panel === 'telescope'
 
     return (
         <div
@@ -226,10 +230,6 @@ export default function RoomOverlay({ onClose, initialFocus }: Props) {
                         reducedMotion={reduced}
                         paused={!!panel}
                         onSelect={select}
-                        // clicking an empty part of the scene closes the hobby card, like the back button
-                        onBackgroundClick={() => {
-                            if (hobby) back()
-                        }}
                     />
                 )}
 
@@ -264,20 +264,6 @@ export default function RoomOverlay({ onClose, initialFocus }: Props) {
                 Close ✕
             </button>
 
-            {hobby && !panel && (
-                <div className="absolute bottom-6 left-1/2 z-10 w-[min(92vw,26rem)] -translate-x-1/2 rounded-xl border border-white/15 bg-slate-900/90 p-5 backdrop-blur">
-                    <h2 className="text-lg font-semibold">{hobby.title}</h2>
-                    <p className="mt-1 text-sm text-white/80">{hobby.text}</p>
-                    <button
-                        type="button"
-                        onClick={back}
-                        className="mt-3 rounded-full border border-white/20 px-4 py-1.5 text-sm transition hover:border-white/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-300"
-                    >
-                        ← Back to the room
-                    </button>
-                </div>
-            )}
-
             {/* Clicking the scene around an open panel goes back to the room (same as the back button).
                 Keyboard users have the back button and Escape. */}
             {panel && (
@@ -295,26 +281,33 @@ export default function RoomOverlay({ onClose, initialFocus }: Props) {
                     role="region"
                     aria-label={PANEL_TITLE[panel ?? 'contact'].title}
                     className={clsx(
-                        'absolute inset-x-3 bottom-3 top-14 z-20 mx-auto flex max-w-[64rem] flex-col overflow-hidden rounded-2xl bg-white text-gray-950 shadow-2xl',
+                        'absolute inset-x-3 bottom-3 top-14 z-20 mx-auto flex max-w-[64rem] flex-col overflow-hidden rounded-2xl shadow-2xl',
+                        dark ? 'bg-[#0f1220] text-white ring-1 ring-white/10' : 'bg-white text-gray-950',
                         !panel && 'hidden'
                     )}
                 >
-                    <div className="flex items-center justify-between gap-3 border-b border-black/10 bg-gray-50 px-4 py-3">
+                    <div className={clsx('flex items-center justify-between gap-3 border-b px-4 py-3', dark ? 'border-white/10 bg-[#0b0e1b]' : 'border-black/10 bg-gray-50')}>
                         <div className="flex items-center gap-3">
                             <button
                                 type="button"
                                 onClick={back}
-                                className="rounded-full border border-black/10 bg-white px-4 py-1.5 text-sm transition hover:border-gray-900/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-gray-900"
+                                className={clsx(
+                                    'rounded-full border px-4 py-1.5 text-sm transition focus-visible:outline focus-visible:outline-2',
+                                    dark
+                                        ? 'border-white/20 bg-transparent hover:border-white/50 focus-visible:outline-amber-300'
+                                        : 'border-black/10 bg-white hover:border-gray-900/40 focus-visible:outline-gray-900'
+                                )}
                             >
                                 ← Back to the room
                             </button>
                             <h2 className="text-lg font-semibold">{PANEL_TITLE[panel ?? 'contact'].title}</h2>
-                            <span className="hidden text-sm text-gray-600 sm:inline">· {PANEL_TITLE[panel ?? 'contact'].object}</span>
+                            <span className={clsx('hidden text-sm sm:inline', dark ? 'text-white/60' : 'text-gray-600')}>· {PANEL_TITLE[panel ?? 'contact'].object}</span>
                         </div>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+                    <div className={clsx('flex-1 overflow-y-auto', !dark && 'p-4 sm:p-6')}>
                         {panel === 'projects' && <ProjectsPanel />}
+                        {panel === 'telescope' && <TelescopePanel onContact={openContact} />}
                         {panel === 'skills' && (
                             <div>
                                 <p className="mb-4 text-center text-sm text-gray-600">Pick a skill to see where I used it.</p>

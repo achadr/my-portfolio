@@ -15,7 +15,7 @@ type Anime = typeof import('animejs')
 type CardId = 'career' | 'skills' | 'room'
 type Stat = { n?: number; text: string }
 
-// Clickable objects of the 3D room: projects, skills, career, contact, guitar, cosmos, games.
+// Clickable objects of the 3D room: projects, skills, career, contact, telescope.
 const ROOM_OBJECTS = 7
 const SKILL_COUNT = skillGroups.reduce((n, g) => n + g.skills.length, 0)
 
@@ -37,7 +37,7 @@ const CARDS: Array<{ id: CardId; title: string; promise: string; stats: Stat[]; 
     {
         id: 'room',
         title: '3D room',
-        promise: 'Walk through my work: a monitor, a laptop, a map, a guitar.',
+        promise: 'Walk through my work: a monitor, a laptop, a map, a telescope.',
         stats: [{ n: ROOM_OBJECTS, text: 'objects' }, { n: projectsData.length, text: 'projects' }],
         action: 'Enter the room',
     },

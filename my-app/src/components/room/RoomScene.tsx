@@ -6,7 +6,7 @@ import { careerPath } from '../../../lib/content'
 import { projectsData } from '../../../lib/data'
 import { LAND, project } from '../../../lib/geo'
 
-export type RoomTarget = 'projects' | 'skills' | 'career' | 'contact' | 'guitar' | 'cosmos' | 'games'
+export type RoomTarget = 'projects' | 'skills' | 'career' | 'contact' | 'telescope'
 type V3 = [number, number, number]
 
 /** Camera positions: where to stand and what to look at for each object. */
@@ -15,20 +15,17 @@ const PRESETS: Record<'home' | RoomTarget, { pos: V3; look: V3 }> = {
     projects: { pos: [0.8, 2.4, 0.6], look: [-0.3, 1.95, -3.1] },
     skills: { pos: [-1.2, 2.3, 0.9], look: [-1.6, 1.3, -2.5] },
     career: { pos: [3.1, 3.2, 0.9], look: [3.1, 3.2, -3.95] },
-    guitar: { pos: [-2.7, 2.45, 1.3], look: [-3, 2.2, -3.9] },
-    cosmos: { pos: [-2.1, 2.1, 2.0], look: [-3.9, 1.6, 0.2] },
-    games: { pos: [1.8, 2.1, 0.6], look: [1.3, 1.2, -2.3] },
+    telescope: { pos: [-2.1, 2.1, 2.0], look: [-3.9, 1.6, 0.2] },
     contact: { pos: [1.0, 2.25, 0.0], look: [0.75, 1.1, -2.1] },
 }
 const HOME_NARROW: V3 = [8.8, 6.4, 9.8]
 
-const HOTSPOTS: Array<{ id: RoomTarget; label: string; pos: V3 }> = [
+/** `aria` gives screen readers more than the short label when the label alone is not explicit. */
+const HOTSPOTS: Array<{ id: RoomTarget; label: string; pos: V3; aria?: string }> = [
     { id: 'projects', label: 'Projects', pos: [-0.3, 2.75, -3.1] },
     { id: 'skills', label: 'Skills', pos: [-1.6, 2.1, -2.5] },
     { id: 'career', label: 'Career', pos: [3.1, 4.3, -3.9] },
-    { id: 'guitar', label: 'Guitar', pos: [-3, 3.3, -3.8] },
-    { id: 'cosmos', label: 'Cosmos', pos: [-3.8, 2.4, 0.3] },
-    { id: 'games', label: 'Games', pos: [1.3, 1.9, -2.3] },
+    { id: 'telescope', label: 'Horizon', pos: [-3.8, 2.4, 0.3], aria: 'Horizon: where I am heading, seen through the telescope' },
     { id: 'contact', label: 'Contact', pos: [0.6, 1.55, -1.95] },
 ]
 
@@ -522,15 +519,14 @@ function Room({ api }: { api: Api }) {
             </mesh>
             <Cyl r1={0.07} r2={0.07} h={0.05} pos={[0.4, 1.2, -2.55]} rot={[0, 0, Math.PI / 2]} color="#ff8f6b" />
             <Cyl r1={0.07} r2={0.07} h={0.05} pos={[0.8, 1.2, -2.55]} rot={[0, 0, Math.PI / 2]} color="#ff8f6b" />
-            <Interactive id="games" api={api}>
-                <Hit pos={[1.3, 1.2, -2.3]} r={0.55} />
+            <group>
                 <B size={[0.55, 0.12, 0.32]} pos={[1.3, 1.17, -2.3]} color="#3a3a6a" rough={0.4} />
                 <B size={[0.14, 0.1, 0.3]} pos={[1.05, 1.14, -2.25]} color="#3a3a6a" rough={0.4} />
                 <B size={[0.14, 0.1, 0.3]} pos={[1.55, 1.14, -2.25]} color="#3a3a6a" rough={0.4} />
                 {([[1.45, -2.3, '#ff8f6b'], [1.55, -2.35, '#5fd6b0'], [1.35, -2.38, '#7a8cff']] as Array<[number, number, string]>).map(([x, z, c]) => (
                     <Sph key={c} r={0.03} pos={[x, 1.25, z]} color={c} />
                 ))}
-            </Interactive>
+            </group>
 
             {/* envelope = contact */}
             <Interactive id="contact" api={api}>
@@ -559,14 +555,11 @@ function Room({ api }: { api: Api }) {
             <Cyl r1={0.3} r2={0.3} h={0.015} pos={[0.55, 4.0, -3.78]} rot={[Math.PI / 2, 0, 0]} color="#0c0c14" rough={0.3} seg={40} />
             <Cyl r1={0.1} r2={0.1} h={0.017} pos={[0.55, 4.0, -3.77]} rot={[Math.PI / 2, 0, 0]} color="#ff8f6b" seg={24} />
 
-            {/* guitar */}
-            <Interactive id="guitar" api={api}>
-                <Hit pos={[-3, 2.5, -3.8]} r={1.7} />
-                <Guitar />
-            </Interactive>
+            {/* guitar (decor) */}
+            <Guitar />
 
-            {/* telescope */}
-            <Interactive id="cosmos" api={api}>
+            {/* telescope = where I'm heading */}
+            <Interactive id="telescope" api={api}>
                 <Hit pos={[-3.8, 1.5, 0.3]} r={1.1} />
                 <Rod a={[-3.3, 0, 0.3]} b={telescopeTop} r={0.03} color="#9a98b4" />
                 <Rod a={[-4.15, 0, 0.78]} b={telescopeTop} r={0.03} color="#9a98b4" />
@@ -842,6 +835,7 @@ export default function RoomScene({ focus, reducedMotion, paused = false, onSele
                     labels.current[h.id] = el
                 }}
                 type="button"
+                aria-label={h.aria}
                 onClick={() => onSelect(h.id)}
                 onMouseEnter={() => setHover(h.id)}
                 onMouseLeave={() => setHover(null)}
