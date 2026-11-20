@@ -64,16 +64,9 @@ export function buildLayout(): Branch[] {
     })
 }
 
-function goToAnchor(id: string) {
-    const el = document.getElementById(id)
-    if (!el) return
-    el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    history.replaceState(null, '', `#${id}`)
-}
-
 const trim = (s: string, n: number) => (s.length > n ? `${s.slice(0, n - 1)}…` : s)
 
-type RelItem = { kind: 'project' | 'career'; label: string; sub?: string; anchor: string; index: number }
+type RelItem = { kind: 'project' | 'career'; label: string; sub?: string; anchor: string; index: number; url?: string }
 
 function relatedItems(skill: SkillName): RelItem[] {
     return [
@@ -82,6 +75,7 @@ function relatedItems(skill: SkillName): RelItem[] {
             label: project.title,
             anchor: projectAnchor(index),
             index,
+            url: project.url,
         })),
         ...experiencesUsing(skill).map(({ experience, index }) => ({
             kind: 'career' as const,
@@ -106,8 +100,7 @@ export default function SkillsTree({ selected, onSelect }: Props) {
     const pulsePathRef = useRef<SVGPathElement>(null)
     const pulseDotRef = useRef<SVGCircleElement>(null)
     const { focusExperience } = useFocus()
-    // Projects scroll to their card; career steps open the career map / timeline.
-    const openRelated = (it: RelItem) => (it.kind === 'career' ? focusExperience(it.index) : goToAnchor(it.anchor))
+    // Projects open the live app in a new tab (see the pill below); career steps open the career map.
     const [focusedGroup, setFocusedGroup] = useState<string | null>(null)
 
     const selectedLeaf = selected
@@ -431,14 +424,14 @@ export default function SkillsTree({ selected, onSelect }: Props) {
                                             strokeOpacity={0.7}
                                             strokeWidth={2}
                                         />
-                                        <g
-                                            className="rel-pill group cursor-pointer outline-none"
-                                            role="link"
-                                            tabIndex={0}
-                                            aria-label={`${isProject ? 'Project' : 'Career'}: ${it.label}`}
-                                            onClick={() => openRelated(it)}
-                                            onKeyDown={activate(() => openRelated(it))}
-                                        >
+                                        {isProject ? (
+                                            <a
+                                                className="rel-pill group cursor-pointer outline-none"
+                                                href={it.url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                aria-label={`Project: ${it.label} (opens in a new tab)`}
+                                            >
                                             <rect
                                                 className="transition-colors group-hover:fill-gray-700 group-focus-visible:stroke-amber-500"
                                                 x={colX}
@@ -459,7 +452,7 @@ export default function SkillsTree({ selected, onSelect }: Props) {
                                                 fill={isProject ? '#ffffff' : '#111827'}
                                                 className="pointer-events-none select-none"
                                             >
-                                                {trim(it.label, 26)}
+                                                {isProject ? `${trim(it.label, 24)} ↗` : trim(it.label, 26)}
                                             </text>
                                             {it.sub && (
                                                 <text
@@ -473,7 +466,52 @@ export default function SkillsTree({ selected, onSelect }: Props) {
                                                     {it.sub}
                                                 </text>
                                             )}
-                                        </g>
+                                            </a>
+                                        ) : (
+                                            <g
+                                                className="rel-pill group cursor-pointer outline-none"
+                                                role="link"
+                                                tabIndex={0}
+                                                aria-label={`Career: ${it.label}`}
+                                                onClick={() => focusExperience(it.index)}
+                                                onKeyDown={activate(() => focusExperience(it.index))}
+                                            >
+                                            <rect
+                                                className="transition-colors group-hover:fill-gray-700 group-focus-visible:stroke-amber-500"
+                                                x={colX}
+                                                y={y}
+                                                width={PILL_W}
+                                                height={PILL_H}
+                                                rx={20}
+                                                fill={isProject ? '#111827' : '#ffffff'}
+                                                stroke={isProject ? '#111827' : selectedLeaf.color}
+                                                strokeWidth={isProject ? 2 : 2}
+                                            />
+                                            <text
+                                                x={colX + PILL_W / 2}
+                                                y={it.sub ? y + 17 : y + PILL_H / 2 + 5}
+                                                textAnchor="middle"
+                                                fontSize={13}
+                                                fontWeight={600}
+                                                fill={isProject ? '#ffffff' : '#111827'}
+                                                className="pointer-events-none select-none"
+                                            >
+                                                {isProject ? `${trim(it.label, 24)} ↗` : trim(it.label, 26)}
+                                            </text>
+                                            {it.sub && (
+                                                <text
+                                                    x={colX + PILL_W / 2}
+                                                    y={y + 31}
+                                                    textAnchor="middle"
+                                                    fontSize={11}
+                                                    fill="#4b5563"
+                                                    className="pointer-events-none select-none"
+                                                >
+                                                    {it.sub}
+                                                </text>
+                                            )}
+                                            </g>
+                                        )}
                                     </g>
                                 )
                             })

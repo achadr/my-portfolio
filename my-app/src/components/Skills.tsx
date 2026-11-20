@@ -6,7 +6,6 @@ import SkillsTree from './SkillsTree'
 import { skillGroups, type SkillName } from '../../lib/content'
 import {
     experiencesUsing,
-    projectAnchor,
     projectsUsing,
 } from '../../lib/relations'
 import { useSectionInView } from '../../lib/hooks'
@@ -137,10 +136,16 @@ export default function Skills() {
                                 Projects
                             </h4>
                             <ul className='mt-1 flex flex-col gap-1'>
-                                {projects.map(({ project, index }) => (
+                                {projects.map(({ project }) => (
                                     <li key={project.title}>
-                                        <a className='underline underline-offset-2 hover:text-gray-950' href={`#${projectAnchor(index)}`}>
-                                            {project.title}
+                                        <a
+                                            className='underline underline-offset-2 hover:text-gray-950'
+                                            href={project.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                        >
+                                            {project.title} <span aria-hidden="true">↗</span>
+                                            <span className='sr-only'> (opens in a new tab)</span>
                                         </a>
                                     </li>
                                 ))}
