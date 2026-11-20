@@ -111,6 +111,8 @@ function Hit({ pos, r }: { pos: V3; r: number }) {
 type Api = {
     setHover: (id: RoomTarget | null) => void
     onSelect: (id: RoomTarget) => void
+    /** True when the last press was a drag (turning the camera), not a click. */
+    wasDrag: () => boolean
     refs: React.MutableRefObject<Partial<Record<RoomTarget, THREE.Group | null>>>
 }
 function Interactive({ id, api, children }: { id: RoomTarget; api: Api; children: React.ReactNode }) {
@@ -126,7 +128,7 @@ function Interactive({ id, api, children }: { id: RoomTarget; api: Api; children
             onPointerOut={() => api.setHover(null)}
             onClick={(e) => {
                 e.stopPropagation()
-                api.onSelect(id)
+                if (!api.wasDrag()) api.onSelect(id)
             }}
         >
             {children}
@@ -619,22 +621,55 @@ function Room({ api }: { api: Api }) {
 
 /* ---------- camera ---------- */
 
-function CameraRig({ focus, reduced }: { focus: RoomTarget | null; reduced: boolean }) {
+/** How the visitor turned the view: a turn around the looked-at point, a tilt and a zoom factor. */
+type View = { yaw: number; pitch: number; zoom: number }
+const VIEW_LIMITS = { yaw: 0.9, pitchMin: -0.35, pitchMax: 0.45, zoomMin: 0.45, zoomMax: 1.35 }
+const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v))
+function clampView(v: View) {
+    v.yaw = clamp(v.yaw, -VIEW_LIMITS.yaw, VIEW_LIMITS.yaw)
+    v.pitch = clamp(v.pitch, VIEW_LIMITS.pitchMin, VIEW_LIMITS.pitchMax)
+    v.zoom = clamp(v.zoom, VIEW_LIMITS.zoomMin, VIEW_LIMITS.zoomMax)
+}
+
+/**
+ * Flies between the presets, then applies what the visitor asked for:
+ * the view only turns while the mouse button is held, and the wheel zooms.
+ */
+function CameraRig({ focus, reduced, view }: { focus: RoomTarget | null; reduced: boolean; view: React.MutableRefObject<View> }) {
     const { camera, size } = useThree()
     const cur = useRef({
         pos: new THREE.Vector3(...PRESETS.home.pos),
         look: new THREE.Vector3(...PRESETS.home.look),
+        view: { yaw: 0, pitch: 0, zoom: 1 } as View,
     })
     const tmp = useMemo(() => new THREE.Vector3(), [])
-    useFrame((state, dt) => {
+    const offset = useMemo(() => new THREE.Vector3(), [])
+    const sph = useMemo(() => new THREE.Spherical(), [])
+
+    // going to an object (or back home) starts from its framing again
+    useEffect(() => {
+        view.current = { yaw: 0, pitch: 0, zoom: 1 }
+    }, [focus, view])
+
+    useFrame((_, dt) => {
         const narrow = size.width / size.height < 1.1
         const target = focus ? PRESETS[focus] : { pos: narrow ? HOME_NARROW : PRESETS.home.pos, look: PRESETS.home.look }
         const k = reduced ? 1 : Math.min(1, dt * 2.8)
         cur.current.pos.lerp(tmp.set(...target.pos), k)
         cur.current.look.lerp(tmp.set(...target.look), k)
-        const px = reduced ? 0 : state.pointer.x * 0.35
-        const py = reduced ? 0 : state.pointer.y * 0.2
-        camera.position.set(cur.current.pos.x + px, cur.current.pos.y + py, cur.current.pos.z)
+        // the turn follows the hand closely, but still eases a little
+        const kv = reduced ? 1 : Math.min(1, dt * 10)
+        const v = cur.current.view
+        v.yaw += (view.current.yaw - v.yaw) * kv
+        v.pitch += (view.current.pitch - v.pitch) * kv
+        v.zoom += (view.current.zoom - v.zoom) * kv
+
+        offset.copy(cur.current.pos).sub(cur.current.look)
+        sph.setFromVector3(offset)
+        sph.theta += v.yaw
+        sph.phi = clamp(sph.phi - v.pitch, 0.2, 1.5)
+        sph.radius = Math.max(1.2, sph.radius * v.zoom)
+        camera.position.copy(cur.current.look).add(offset.setFromSpherical(sph))
         camera.lookAt(cur.current.look)
     })
     return null
@@ -672,7 +707,76 @@ export default function RoomScene({ focus, reducedMotion, paused = false, onSele
     const [hover, setHover] = useState<RoomTarget | null>(null)
     const refs = useRef<Partial<Record<RoomTarget, THREE.Group | null>>>({})
     const labels = useRef<Partial<Record<RoomTarget, HTMLButtonElement | null>>>({})
-    const api = useMemo<Api>(() => ({ setHover, onSelect, refs }), [onSelect])
+    const view = useRef<View>({ yaw: 0, pitch: 0, zoom: 1 })
+    const wrapRef = useRef<HTMLDivElement>(null)
+    const drag = useRef({ down: false, moved: false, x: 0, y: 0, id: -1 })
+    const [dragging, setDragging] = useState(false)
+    const api = useMemo<Api>(() => ({ setHover, onSelect, refs, wasDrag: () => drag.current.moved }), [onSelect])
+
+    // Turning the view: only while the button is held. Zoom: mouse wheel. Keyboard: arrows and + / -.
+    useEffect(() => {
+        const el = wrapRef.current
+        if (!el || paused) return
+        const canvas = el.querySelector('canvas')
+        const d = drag.current
+        const onDown = (e: PointerEvent) => {
+            if (e.target !== canvas || e.button !== 0) return
+            Object.assign(d, { down: true, moved: false, x: e.clientX, y: e.clientY, id: e.pointerId })
+        }
+        const onMove = (e: PointerEvent) => {
+            if (!d.down || e.pointerId !== d.id) return
+            const dx = e.clientX - d.x
+            const dy = e.clientY - d.y
+            if (!d.moved && Math.hypot(dx, dy) < 5) return
+            if (!d.moved) {
+                d.moved = true
+                setDragging(true)
+            }
+            d.x = e.clientX
+            d.y = e.clientY
+            view.current.yaw -= dx * 0.005
+            view.current.pitch += dy * 0.004
+            clampView(view.current)
+        }
+        const onUp = (e: PointerEvent) => {
+            if (e.pointerId !== d.id) return
+            d.down = false
+            setDragging(false)
+        }
+        const onWheel = (e: WheelEvent) => {
+            e.preventDefault()
+            view.current.zoom *= Math.exp(e.deltaY * 0.0012)
+            clampView(view.current)
+        }
+        const onKey = (e: KeyboardEvent) => {
+            const t = e.target as HTMLElement | null
+            if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) return
+            const v = view.current
+            if (e.key === 'ArrowLeft') v.yaw += 0.12
+            else if (e.key === 'ArrowRight') v.yaw -= 0.12
+            else if (e.key === 'ArrowUp') v.pitch += 0.08
+            else if (e.key === 'ArrowDown') v.pitch -= 0.08
+            else if (e.key === '+' || e.key === '=') v.zoom *= 0.85
+            else if (e.key === '-') v.zoom /= 0.85
+            else return
+            e.preventDefault()
+            clampView(v)
+        }
+        el.addEventListener('pointerdown', onDown)
+        window.addEventListener('pointermove', onMove)
+        window.addEventListener('pointerup', onUp)
+        window.addEventListener('pointercancel', onUp)
+        el.addEventListener('wheel', onWheel, { passive: false })
+        window.addEventListener('keydown', onKey)
+        return () => {
+            el.removeEventListener('pointerdown', onDown)
+            window.removeEventListener('pointermove', onMove)
+            window.removeEventListener('pointerup', onUp)
+            window.removeEventListener('pointercancel', onUp)
+            el.removeEventListener('wheel', onWheel)
+            window.removeEventListener('keydown', onKey)
+        }
+    }, [paused])
 
     // highlight the hovered / focused object
     useEffect(() => {
@@ -685,19 +789,21 @@ export default function RoomScene({ focus, reducedMotion, paused = false, onSele
                 }
             })
         })
-        document.body.style.cursor = hover ? 'pointer' : ''
-        return () => {
-            document.body.style.cursor = ''
-        }
     }, [hover, focus])
 
     return (
-        <div className="relative h-full w-full overflow-hidden">
+        <div
+            ref={wrapRef}
+            className="relative h-full w-full touch-none overflow-hidden"
+            style={{ cursor: dragging ? 'grabbing' : hover ? 'pointer' : 'grab' }}
+        >
         <Canvas
             shadows
             dpr={[1, 1.5]}
             frameloop={paused ? 'never' : 'always'}
-            onPointerMissed={() => onBackgroundClick?.()}
+            onPointerMissed={() => {
+                if (!drag.current.moved) onBackgroundClick?.()
+            }}
             camera={{ fov: 45, near: 0.1, far: 100, position: PRESETS.home.pos }}
             gl={{ antialias: true }}
         >
@@ -724,7 +830,7 @@ export default function RoomScene({ focus, reducedMotion, paused = false, onSele
             <pointLight position={[-4.4, 2.7, -1]} intensity={5} distance={9} color="#9bb6ff" />
 
             <Room api={api} />
-            <CameraRig focus={focus} reduced={reducedMotion} />
+            <CameraRig focus={focus} reduced={reducedMotion} view={view} />
             <LabelProjector labels={labels} />
         </Canvas>
 
