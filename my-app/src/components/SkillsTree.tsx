@@ -102,6 +102,9 @@ export default function SkillsTree({ selected, onSelect }: Props) {
     const branches = useMemo(buildLayout, [])
     const svgRef = useRef<SVGSVGElement>(null)
     const relRef = useRef<SVGGElement>(null)
+    // the pulse that travels from my photo to the selected skill
+    const pulsePathRef = useRef<SVGPathElement>(null)
+    const pulseDotRef = useRef<SVGCircleElement>(null)
     const { focusExperience } = useFocus()
     // Projects scroll to their card; career steps open the career map / timeline.
     const openRelated = (it: RelItem) => (it.kind === 'career' ? focusExperience(it.index) : goToAnchor(it.anchor))
@@ -111,6 +114,12 @@ export default function SkillsTree({ selected, onSelect }: Props) {
         ? branches.flatMap((b) => b.leaves.map((l) => ({ ...l, color: b.color, group: b.id }))).find((l) => l.skill === selected) ?? null
         : null
     const litGroup = selectedLeaf?.group ?? focusedGroup
+    // route of the pulse: my photo -> the skill's branch -> the skill
+    const selectedBranch = selectedLeaf ? branches.find((b) => b.id === selectedLeaf.group) ?? null : null
+    const pulseRoute =
+        selectedLeaf && selectedBranch
+            ? `M${CX} ${CY}L${selectedBranch.x} ${selectedBranch.y}L${selectedLeaf.x} ${selectedLeaf.y}`
+            : ''
     const items = useMemo(() => (selected ? relatedItems(selected) : []), [selected])
 
     // --- intro animation (Anime.js is loaded on demand, only when the tree is shown) ---
@@ -145,14 +154,19 @@ export default function SkillsTree({ selected, onSelect }: Props) {
         }
     }, [])
 
-    // --- related nodes draw themselves in when a skill is selected ---
+    // --- a pulse runs from my photo along the branch to the skill, then the related nodes draw themselves in ---
     useEffect(() => {
         const g = relRef.current
-        if (!g || !selected) return
-        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+        const path = pulsePathRef.current
+        const dot = pulseDotRef.current
+        if (!g || !selected || !path || !dot) return
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            path.style.opacity = '0.55' // the route stays visible, without movement
+            return
+        }
         let cancelled = false
-        const running: Array<{ revert: () => unknown }> = []
-        import('animejs').then(({ animate, stagger }) => {
+        const running: Array<{ cancel: () => unknown }> = []
+        import('animejs').then(({ createTimeline, stagger, svg }) => {
             if (cancelled) return
             const lines = Array.from(g.querySelectorAll<SVGPathElement>('.rel-line'))
             const pills = Array.from(g.querySelectorAll<SVGGElement>('.rel-pill'))
@@ -163,21 +177,30 @@ export default function SkillsTree({ selected, onSelect }: Props) {
             pills.forEach((p) => {
                 p.style.opacity = '0'
             })
-            running.push(animate(lines, { strokeDashoffset: [1, 0], duration: 600, delay: stagger(70), ease: 'inOutSine' }))
             const fromX = selectedLeaf && selectedLeaf.x < CX ? -24 : 24
             running.push(
-                animate(pills, {
-                    opacity: [0, 1],
-                    translateX: [fromX, 0],
-                    duration: 500,
-                    delay: stagger(70, { start: 250 }),
-                    ease: 'outCubic',
-                })
+                createTimeline({ defaults: { ease: 'inOut(2)' } })
+                    // the route lights up while the pulse travels it (photo -> branch -> skill)
+                    .add(path, { opacity: [0, 0.9], duration: 120 }, 0)
+                    .add(svg.createDrawable(path), { draw: ['0 0', '0 1'], duration: 600 }, 0)
+                    .add(dot, { opacity: [0, 1], duration: 120 }, 0)
+                    .add(dot, { ...svg.createMotionPath(path), duration: 600 }, 0)
+                    // arrival: the pulse bursts on the skill, the route stays softly lit
+                    .add(dot, { opacity: [1, 0], scale: [1, 2.4], duration: 320, ease: 'out(2)' }, 600)
+                    .add(path, { opacity: 0.55, duration: 400 }, 650)
+                    // then the projects and career steps that use the skill appear
+                    .add(lines, { strokeDashoffset: [1, 0], duration: 600, delay: stagger(70), ease: 'inOutSine' }, 550)
+                    .add(pills, { opacity: [0, 1], translateX: [fromX, 0], duration: 500, delay: stagger(70), ease: 'outCubic' }, 750)
             )
         })
         return () => {
             cancelled = true
-            running.forEach((a) => a.revert())
+            // cancel (not revert): by now React may have emptied the pulse route, and reverting
+            // would render the motion path one last time on an empty path, which throws.
+            // The next pulse resets every value it animates anyway.
+            running.forEach((a) => a.cancel())
+            if (path) path.style.opacity = '0'
+            if (dot) dot.style.opacity = '0'
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selected])
@@ -254,6 +277,20 @@ export default function SkillsTree({ selected, onSelect }: Props) {
                         ))}
                     </g>
                 ))}
+
+                {/* the route lit by the pulse (under the nodes) */}
+                <path
+                    ref={pulsePathRef}
+                    d={pulseRoute}
+                    fill="none"
+                    stroke={selectedLeaf?.color ?? 'none'}
+                    strokeWidth={4}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    opacity={0}
+                    className="pointer-events-none"
+                    aria-hidden="true"
+                />
 
                 {/* leaves + domains */}
                 {branches.map((b) => (
@@ -350,6 +387,21 @@ export default function SkillsTree({ selected, onSelect }: Props) {
                         />
                     </g>
                 </g>
+
+                {/* the travelling pulse (above the nodes) */}
+                <circle
+                    ref={pulseDotRef}
+                    cx={0}
+                    cy={0}
+                    r={7}
+                    fill="#f59e0b"
+                    stroke="#ffffff"
+                    strokeWidth={2}
+                    opacity={0}
+                    className="pointer-events-none"
+                    style={{ transformBox: 'fill-box', transformOrigin: 'center', filter: 'drop-shadow(0 0 5px rgba(245,158,11,.8))' }}
+                    aria-hidden="true"
+                />
 
                 {/* related projects / career steps as nodes of the tree */}
                 {selectedLeaf && (
