@@ -3,7 +3,7 @@ import React from 'react'
 import Image from 'next/image'
 import { projectsData } from '../../../lib/data'
 
-/** The four projects as cards, for the panel that opens from the monitor. */
+/** The projects as cards, for the panel that opens from the monitor. */
 export default function ProjectsPanel() {
     return (
         <ul className="grid gap-4 sm:grid-cols-2">

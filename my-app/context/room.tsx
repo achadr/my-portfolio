@@ -4,18 +4,9 @@ import React, { createContext, useCallback, useContext, useMemo, useRef, useStat
 import dynamic from "next/dynamic"
 // Type-only imports: they are erased at build time, so three.js stays out of the page bundle.
 import type { RoomTarget } from "../src/components/room/RoomScene"
-import type { SectionId } from "../src/components/room/RoomOverlay"
-import { useActiveSectionContext } from "./active-section"
 
 // Only the small overlay shell is loaded when the room is opened; it pulls three.js in itself.
 const RoomOverlay = dynamic(() => import("../src/components/room/RoomOverlay"), { ssr: false })
-
-const SECTION_NAME = {
-    projects: "Projects",
-    skills: "Skills",
-    experience: "Experience",
-    contact: "Contact",
-} as const
 
 type RoomContextType = {
     isOpen: boolean
@@ -35,7 +26,6 @@ export default function RoomContextProvider({ children }: { children: React.Reac
     const [room, setRoom] = useState<{ open: boolean; target?: RoomTarget; n: number }>({ open: false, n: 0 })
     // Focus goes back to whatever opened the room (button, card, link) when it closes.
     const returnFocus = useRef<HTMLElement | null>(null)
-    const { setActiveSection, setTimeOfLastClick } = useActiveSectionContext()
 
     const openRoom = useCallback((target?: RoomTarget) => {
         returnFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
@@ -47,26 +37,12 @@ export default function RoomContextProvider({ children }: { children: React.Reac
         setTimeout(() => returnFocus.current?.focus({ preventScroll: true }), 0)
     }, [])
 
-    // "See it on the page": leave the room and scroll to the matching section.
-    const navigate = useCallback(
-        (section: SectionId) => {
-            setRoom((r) => ({ ...r, open: false }))
-            setActiveSection(SECTION_NAME[section])
-            setTimeOfLastClick(Date.now())
-            // wait one tick so the page is scrollable again once the overlay is gone
-            setTimeout(() => {
-                document.getElementById(section)?.scrollIntoView({ behavior: "smooth", block: "start" })
-            }, 60)
-        },
-        [setActiveSection, setTimeOfLastClick]
-    )
-
     const value = useMemo(() => ({ isOpen: room.open, openRoom, closeRoom }), [room.open, openRoom, closeRoom])
 
     return (
         <RoomContext.Provider value={value}>
             {children}
-            {room.open && <RoomOverlay key={room.n} initialFocus={room.target} onClose={closeRoom} onNavigate={navigate} />}
+            {room.open && <RoomOverlay key={room.n} initialFocus={room.target} onClose={closeRoom} />}
         </RoomContext.Provider>
     )
 }

@@ -22,20 +22,12 @@ const RoomScene = dynamic(() => import('./RoomScene'), {
     ),
 })
 
-/** Sections of the regular page, used by the "open on the page" escape hatch. */
-export type SectionId = 'projects' | 'skills' | 'experience' | 'contact'
 type PanelId = 'projects' | 'skills' | 'career' | 'contact'
 
 const PANEL_OF: Partial<Record<RoomTarget, PanelId>> = {
     projects: 'projects',
     skills: 'skills',
     career: 'career',
-    contact: 'contact',
-}
-const SECTION_OF_PANEL: Record<PanelId, SectionId> = {
-    projects: 'projects',
-    skills: 'skills',
-    career: 'experience',
     contact: 'contact',
 }
 const PANEL_TITLE: Record<PanelId, { title: string; object: string }> = {
@@ -69,13 +61,11 @@ function webglAvailable() {
 
 type Props = {
     onClose: () => void
-    /** Leave the room and scroll to a section of the regular page. */
-    onNavigate: (section: SectionId) => void
     /** Object to fly to as soon as the room is ready (a panel or a hobby). */
     initialFocus?: RoomTarget
 }
 
-export default function RoomOverlay({ onClose, onNavigate, initialFocus }: Props) {
+export default function RoomOverlay({ onClose, initialFocus }: Props) {
     const rootRef = useRef<HTMLDivElement>(null)
     const closeRef = useRef<HTMLButtonElement>(null)
     const panelRef = useRef<HTMLDivElement>(null)
@@ -321,13 +311,6 @@ export default function RoomOverlay({ onClose, onNavigate, initialFocus }: Props
                             <h2 className="text-lg font-semibold">{PANEL_TITLE[panel ?? 'contact'].title}</h2>
                             <span className="hidden text-sm text-gray-600 sm:inline">· {PANEL_TITLE[panel ?? 'contact'].object}</span>
                         </div>
-                        <button
-                            type="button"
-                            onClick={() => onNavigate(SECTION_OF_PANEL[panel ?? 'contact'])}
-                            className="rounded-full px-3 py-1.5 text-sm text-gray-700 underline underline-offset-2 hover:text-gray-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-gray-900"
-                        >
-                            See it on the page ↗
-                        </button>
                     </div>
 
                     <div className="flex-1 overflow-y-auto p-4 sm:p-6">
@@ -359,7 +342,7 @@ export default function RoomOverlay({ onClose, onNavigate, initialFocus }: Props
 
             {supported === true && !focus && (
                 <p className="pointer-events-none absolute bottom-4 left-1/2 z-10 -translate-x-1/2 rounded-full bg-slate-900/70 px-4 py-1.5 text-xs text-white/70">
-                    Click an object or a label · Esc to close
+                    Drag to look around · Scroll to zoom · Click an object · Esc to close
                 </p>
             )}
         </div>
