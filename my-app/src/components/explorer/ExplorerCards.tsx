@@ -5,8 +5,10 @@ import { BsArrowRight, BsXLg } from 'react-icons/bs'
 import { careerPath, skillGroups, TIMELINE_FROM, type SkillName } from '../../../lib/content'
 import { projectsData } from '../../../lib/data'
 import { useRoom } from '../../../context/room'
+import { TOUR_STEPS, useTour } from '../../../context/tour'
 import CareerMap from '../CareerMap'
 import SkillsTree from '../SkillsTree'
+import GuidedTour from './GuidedTour'
 import { MiniCareerMap, MiniSkillTree, RoomPreview } from './previews'
 
 type Anime = typeof import('animejs')
@@ -70,7 +72,12 @@ export default function ExplorerCards() {
     // content of the open card (real map / tree): shown once the card has reached its size
     const [contentShown, setContentShown] = useState(true)
     const [selectedSkill, setSelectedSkill] = useState<SkillName | null>(null)
+    const [careerJump, setCareerJump] = useState<{ index: number; n: number } | null>(null)
+    // what the guided tour asks the open card to show, applied once the card content is visible
+    const [pending, setPending] = useState<{ skill?: SkillName; experience?: number } | null>(null)
+    const sectionRef = useRef<HTMLElement>(null)
     const { openRoom } = useRoom()
+    const { step } = useTour()
 
     // --- first appearance, then the live previews ---
     useEffect(() => {
@@ -143,6 +150,30 @@ export default function ExplorerCards() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open])
 
+    // --- guided tour: each step opens the right card and points it at a skill or a career step ---
+    useEffect(() => {
+        if (step < 0) return
+        const show = TOUR_STEPS[step].show
+        sectionRef.current?.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth', block: 'start' })
+        if (show.card === 'room') return
+        if (open !== show.card) {
+            setSelectedSkill(null) // no pulse for an old skill while the card opens
+            change(show.card)
+        }
+        setPending(show.card === 'skills' ? { skill: show.skill as SkillName } : { experience: show.experience })
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [step])
+    // the skill pulse / the career journey start once the opened card shows its content
+    useEffect(() => {
+        if (!contentShown || !pending) return
+        if (pending.skill) setSelectedSkill(pending.skill)
+        if (pending.experience !== undefined) {
+            const index = pending.experience
+            setCareerJump((j) => ({ index, n: (j?.n ?? 0) + 1 }))
+        }
+        setPending(null)
+    }, [contentShown, pending])
+
     const onCard = (id: CardId) => {
         if (id === 'room') return openRoom()
         focusAfter.current = `[data-card="${id}"] [data-close]`
@@ -165,7 +196,7 @@ export default function ExplorerCards() {
     }
 
     return (
-        <section aria-label="Explore my profile" className="mx-auto mt-14 hidden w-full max-w-[56rem] md:block">
+        <section ref={sectionRef} aria-label="Explore my profile" className="mx-auto mt-14 hidden w-full max-w-[56rem] scroll-mt-28 md:block">
             <h2 className="mb-4 text-center text-sm font-medium uppercase tracking-wider text-gray-600">Explore my profile</h2>
             <div ref={rootRef} className={clsx('xcards grid gap-3', ready && 'is-ready', open ? 'grid-cols-2' : 'grid-cols-3')}>
                 {CARDS.map((c) => {
@@ -253,7 +284,7 @@ export default function ExplorerCards() {
                                         </button>
                                     </div>
                                     <div className={clsx('p-4 transition-opacity duration-300 sm:p-6', !contentShown && 'opacity-0')}>
-                                        {c.id === 'career' && <CareerMap jumpTo={null} />}
+                                        {c.id === 'career' && <CareerMap jumpTo={careerJump} />}
                                         {c.id === 'skills' && (
                                             <>
                                                 <p className="mb-4 text-center text-sm text-gray-600">Pick a skill to see where I used it.</p>
@@ -272,6 +303,7 @@ export default function ExplorerCards() {
                     )
                 })}
             </div>
+            <GuidedTour />
         </section>
     )
 }

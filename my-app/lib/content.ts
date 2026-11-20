@@ -17,12 +17,6 @@ export const profile = {
   github: SOCIAL.github,
   pitch:
     "From internal management tools to geospatial platforms, I build interactive web apps and map visualisations with React and TypeScript.",
-  facts: [
-    "React · TypeScript · Next.js",
-    "DeckGL · Mapbox · Three.js",
-    "Node.js · MongoDB · GraphQL",
-    "Geotwin · 2021–2024",
-  ],
 } as const;
 
 export type SkillName = (typeof skillsData)[number];

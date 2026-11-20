@@ -54,3 +54,15 @@ html {
     transform-box: fill-box;
     transform-origin: center;
 }
+
+/* Guided tour (GuidedTour.tsx): the halo pulses gently around what to look at. */
+@keyframes tour-pulse {
+    0% { box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.45); }
+    100% { box-shadow: 0 0 0 14px rgba(251, 191, 36, 0); }
+}
+.tour-halo {
+    animation: tour-pulse 1.2s ease-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+    .tour-halo { animation: none; box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.35); }
+}

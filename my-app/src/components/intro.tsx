@@ -12,10 +12,13 @@ import { useActiveSectionContext } from '../../context/active-section'
 import { profile } from '../../lib/content'
 import toast from 'react-hot-toast'
 import RoomLauncher from './room/RoomLauncher'
+import { useTour } from '../../context/tour'
+import { BsPlayFill } from 'react-icons/bs'
 
 export default function Intro() {
 
     const {setActiveSection, setTimeOfLastClick} = useActiveSectionContext();
+    const { start: startTour } = useTour()
     const {ref} = useSectionInView("Home",0.5)
 
     const copyEmail = async () => {
@@ -89,22 +92,8 @@ export default function Intro() {
             {profile.pitch}
         </motion.p>
 
-        <motion.ul
-            className="mb-8 flex flex-wrap items-center justify-center gap-2 px-4 text-sm"
-            aria-label="Key technologies and experience"
-            initial={{ opacity:0, y: 60}}
-            animate={{ opacity:1, y: 0}}
-            transition={{ delay: 0.08 }}
-        >
-            {profile.facts.map((fact) => (
-                <li key={fact} className="rounded-full border border-black/10 bg-white px-3 py-1 text-gray-700">
-                    {fact}
-                </li>
-            ))}
-        </motion.ul>
-
-        <motion.div 
-            className="flex flex-col sm:flex-row items-center justify-center gap-2 px-4 text-lg font-medium"
+        <motion.div
+            className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-2 px-4 text-lg font-medium"
             initial={{ opacity:0, y: 100}}
             animate={{ opacity:1, y: 0}}
             transition={{
@@ -149,6 +138,18 @@ export default function Intro() {
               <BsGithub/>
             </a>
         </motion.div>
+
+        {/* the guided tour runs on the explorer cards, which are shown from the md breakpoint up */}
+        <div className="mt-4 hidden justify-center md:flex">
+            <button
+                type="button"
+                data-tour-start=""
+                onClick={startTour}
+                className="group flex items-center gap-2 rounded-full bg-indigo-600 px-6 py-2.5 font-medium text-white transition hover:scale-105 hover:bg-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900 active:scale-100"
+            >
+                <BsPlayFill aria-hidden="true" className="text-xl" /> Take the 30-second tour
+            </button>
+        </div>
 
         <p className="mt-5 px-4 text-center text-sm text-gray-700">
             {profile.email}{" "}
