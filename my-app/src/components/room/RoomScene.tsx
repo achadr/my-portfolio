@@ -135,96 +135,129 @@ function Interactive({ id, api, children }: { id: RoomTarget; api: Api; children
 
 /* ---------- the guitar ---------- */
 
-/** An acoustic guitar: extruded figure-eight body with a sunburst top, sound hole, bridge, fretted neck, headstock and strings. */
+/**
+ * A classical guitar, built on real measurements (body 49 cm, bouts 28 / 24 / 37 cm, scale 65 cm,
+ * slotted headstock), with 1 unit = 25.5 cm so the body is 1.92 units long.
+ */
+const G = {
+    bodyTop: 0.95,
+    bodyBottom: -0.97,
+    // the scale length (nut to saddle) is 65 cm; the 12th fret meets the body
+    nutY: 2.22,
+    saddleY: -0.33,
+    headTop: 2.96,
+    soundHoleY: 0.32,
+    soundHoleR: 0.165,
+}
+const SCALE = G.nutY - G.saddleY
+
 function Guitar() {
-    const { geometry, sunburst } = useMemo(() => {
-        // body outline (x = width, y = height), mirrored left/right
+    const { geometry, top } = useMemo(() => {
+        // half outline, mirrored: upper bout (28 cm), waist (24 cm), lower bout (37 cm), smooth tangents everywhere
         const s = new THREE.Shape()
-        s.moveTo(0, 0.95)
-        s.bezierCurveTo(0.35, 0.95, 0.6, 0.8, 0.58, 0.5)
-        s.bezierCurveTo(0.56, 0.25, 0.36, 0.22, 0.4, -0.05)
-        s.bezierCurveTo(0.44, -0.3, 0.82, -0.25, 0.8, -0.55)
-        s.bezierCurveTo(0.78, -0.92, 0.35, -0.97, 0, -0.97)
-        s.bezierCurveTo(-0.35, -0.97, -0.78, -0.92, -0.8, -0.55)
-        s.bezierCurveTo(-0.82, -0.25, -0.44, -0.3, -0.4, -0.05)
-        s.bezierCurveTo(-0.36, 0.22, -0.56, 0.25, -0.58, 0.5)
-        s.bezierCurveTo(-0.6, 0.8, -0.35, 0.95, 0, 0.95)
+        s.moveTo(0, G.bodyTop)
+        s.bezierCurveTo(0.3, G.bodyTop, 0.55, 0.85, 0.55, 0.55)
+        s.bezierCurveTo(0.55, 0.38, 0.47, 0.27, 0.47, 0.14)
+        s.bezierCurveTo(0.47, 0.01, 0.725, -0.12, 0.725, -0.43)
+        s.bezierCurveTo(0.725, -0.8, 0.4, G.bodyBottom, 0, G.bodyBottom)
+        s.bezierCurveTo(-0.4, G.bodyBottom, -0.725, -0.8, -0.725, -0.43)
+        s.bezierCurveTo(-0.725, -0.12, -0.47, 0.01, -0.47, 0.14)
+        s.bezierCurveTo(-0.47, 0.27, -0.55, 0.38, -0.55, 0.55)
+        s.bezierCurveTo(-0.55, 0.85, -0.3, G.bodyTop, 0, G.bodyTop)
         const geo = new THREE.ExtrudeGeometry(s, {
             depth: 0.2,
             bevelEnabled: true,
-            bevelThickness: 0.03,
-            bevelSize: 0.03,
+            bevelThickness: 0.025,
+            bevelSize: 0.02,
             bevelSegments: 3,
             curveSegments: 40,
         })
-        // sunburst top, centred on the sound hole
+        // spruce top: warm honey, slightly darker towards the edge, with a fine vertical grain
         const c = document.createElement('canvas')
         c.width = c.height = 512
         const g = c.getContext('2d')
         if (g) {
-            const gr = g.createRadialGradient(256, 230, 10, 256, 260, 340)
-            gr.addColorStop(0, '#f4bf6e')
-            gr.addColorStop(0.45, '#d98a3a')
-            gr.addColorStop(1, '#4a2410')
+            const gr = g.createRadialGradient(256, 300, 20, 256, 290, 330)
+            gr.addColorStop(0, '#f2c27a')
+            gr.addColorStop(0.55, '#dc9a4c')
+            gr.addColorStop(1, '#8a4a1c')
             g.fillStyle = gr
             g.fillRect(0, 0, 512, 512)
+            g.globalAlpha = 0.08
+            g.strokeStyle = '#5a2e10'
+            for (let x = 0; x < 512; x += 6) {
+                g.lineWidth = 1 + ((x * 7) % 3) * 0.5
+                g.beginPath()
+                g.moveTo(x, 0)
+                g.lineTo(x + 3, 512)
+                g.stroke()
+            }
         }
         const tex = new THREE.CanvasTexture(c)
         tex.colorSpace = THREE.SRGBColorSpace
         // the extruded caps use the outline coordinates as UVs: fit the texture to the outline's bounds
-        tex.repeat.set(1 / 1.7, 1 / 2.0)
-        tex.offset.set(0.85 / 1.7, 1.0 / 2.0)
-        return { geometry: geo, sunburst: tex }
+        tex.repeat.set(1 / 1.45, 1 / 1.92)
+        tex.offset.set(0.725 / 1.45, 0.97 / 1.92)
+        return { geometry: geo, top: tex }
     }, [])
 
-    const fretboard = '#1c120c'
-    const gold = '#d9b45a'
-    const fretYs = useMemo(() => Array.from({ length: 8 }, (_, i) => 2.37 - 3.5 * (1 - Math.pow(2, -(i + 1) / 12))), [])
+    const rosewood = '#1c120c'
+    const cedar = '#5a3418'
+    const brass = '#d9b45a'
+    // 19 frets, the 12th right at the body, the last one just above the sound hole
+    const fretYs = useMemo(() => Array.from({ length: 19 }, (_, i) => G.nutY - SCALE * (1 - Math.pow(2, -(i + 1) / 12))), [])
+    const boardBottom = fretYs[fretYs.length - 1] - 0.03
+    const neckTopY = G.nutY
+    const headLen = G.headTop - G.nutY
 
     return (
         <group position={[-3, 1.7, -3.85]} rotation={[0, 0, 0.06]} scale={0.9}>
-            {/* body */}
+            {/* body: spruce top, cedar sides */}
             <mesh geometry={geometry} position={[0, 0, -0.12]} castShadow receiveShadow>
-                <meshStandardMaterial attach="material-0" map={sunburst} roughness={0.35} />
-                <meshStandardMaterial attach="material-1" color="#7a3d14" roughness={0.45} />
+                <meshStandardMaterial attach="material-0" map={top} roughness={0.35} />
+                <meshStandardMaterial attach="material-1" color={cedar} roughness={0.45} />
             </mesh>
-            {/* sound hole and rosette */}
-            <mesh position={[0, 0.08, 0.116]}>
-                <circleGeometry args={[0.2, 40]} />
+            {/* sound hole and rosette, in the upper part of the body */}
+            <mesh position={[0, G.soundHoleY, 0.106]}>
+                <circleGeometry args={[G.soundHoleR, 40]} />
                 <meshBasicMaterial color="#0d0704" />
             </mesh>
-            <mesh position={[0, 0.08, 0.117]}>
-                <ringGeometry args={[0.2, 0.235, 40]} />
-                <meshBasicMaterial color="#2a1608" />
+            <mesh position={[0, G.soundHoleY, 0.107]}>
+                <ringGeometry args={[G.soundHoleR + 0.012, G.soundHoleR + 0.04, 48]} />
+                <meshStandardMaterial color="#6b3a1a" roughness={0.5} />
             </mesh>
-            <mesh position={[0, 0.08, 0.117]}>
-                <ringGeometry args={[0.25, 0.265, 40]} />
+            <mesh position={[0, G.soundHoleY, 0.108]}>
+                <ringGeometry args={[G.soundHoleR + 0.02, G.soundHoleR + 0.03, 48]} />
                 <meshBasicMaterial color="#e8d6a8" />
             </mesh>
-            {/* bridge */}
-            <B size={[0.52, 0.07, 0.05]} pos={[0, -0.52, 0.135]} color="#2a1608" rough={0.5} />
-            <B size={[0.42, 0.018, 0.02]} pos={[0, -0.49, 0.162]} color="#f0e6cc" rough={0.4} />
-            {/* neck, fretboard, nut, frets */}
-            <B size={[0.17, 1.5, 0.1]} pos={[0, 1.65, 0.06]} color="#3b2416" rough={0.5} />
-            <B size={[0.15, 1.45, 0.025]} pos={[0, 1.68, 0.12]} color={fretboard} rough={0.5} />
-            <B size={[0.16, 0.022, 0.035]} pos={[0, 2.39, 0.135]} color="#efe6cf" rough={0.4} />
+            {/* bridge with its tie block, and the bone saddle */}
+            <B size={[0.72, 0.1, 0.04]} pos={[0, G.saddleY - 0.03, 0.125]} color="#2a1608" rough={0.5} />
+            <B size={[0.34, 0.07, 0.055]} pos={[0, G.saddleY - 0.045, 0.135]} color="#2a1608" rough={0.5} />
+            <B size={[0.32, 0.015, 0.025]} pos={[0, G.saddleY, 0.158]} color="#f0e6cc" rough={0.4} />
+            {/* neck (52 mm at the nut), fretboard running onto the body down to the sound hole */}
+            <B size={[0.22, neckTopY - G.bodyTop + 0.1, 0.1]} pos={[0, (neckTopY + G.bodyTop - 0.1) / 2, 0.05]} color={cedar} rough={0.5} />
+            <B size={[0.23, neckTopY - boardBottom, 0.025]} pos={[0, (neckTopY + boardBottom) / 2, 0.118]} color={rosewood} rough={0.5} />
+            <B size={[0.23, 0.022, 0.035]} pos={[0, G.nutY + 0.005, 0.135]} color="#efe6cf" rough={0.4} />
             {fretYs.map((y, i) => (
-                <B key={i} size={[0.16, 0.012, 0.012]} pos={[0, y, 0.135]} color="#d9d6f0" metal={0.7} rough={0.3} shadow={false} />
+                <B key={i} size={[0.23, 0.01, 0.01]} pos={[0, y, 0.133]} color="#d9d6f0" metal={0.7} rough={0.3} shadow={false} />
             ))}
-            {[2, 4, 6].map((i) => (
-                <Cyl key={i} r1={0.016} r2={0.016} h={0.01} pos={[0, (fretYs[i - 1] + fretYs[i]) / 2, 0.135]} rot={[Math.PI / 2, 0, 0]} color="#e8e6f2" seg={12} />
-            ))}
-            {/* headstock and tuning pegs */}
-            <B size={[0.27, 0.46, 0.06]} pos={[0, 2.62, 0.05]} rot={[-0.12, 0, 0]} color="#2a1608" rough={0.5} />
-            {[2.5, 2.62, 2.74].map((y) => (
-                <React.Fragment key={y}>
-                    <Cyl r1={0.018} r2={0.018} h={0.1} pos={[-0.15, y, 0.07]} rot={[0, 0, Math.PI / 2]} color={gold} metal={0.7} rough={0.3} seg={10} />
-                    <Cyl r1={0.018} r2={0.018} h={0.1} pos={[0.15, y, 0.07]} rot={[0, 0, Math.PI / 2]} color={gold} metal={0.7} rough={0.3} seg={10} />
-                </React.Fragment>
-            ))}
-            {/* strings, from the saddle to the nut */}
+            {/* slotted headstock, tilted back, three tuners on each side */}
+            <group position={[0, G.nutY, 0.06]} rotation={[-0.15, 0, 0]}>
+                <B size={[0.3, headLen, 0.07]} pos={[0, headLen / 2, 0]} color="#2a1608" rough={0.5} />
+                <B size={[0.055, headLen * 0.62, 0.075]} pos={[-0.07, headLen * 0.5, 0]} color="#0d0704" rough={0.6} shadow={false} />
+                <B size={[0.055, headLen * 0.62, 0.075]} pos={[0.07, headLen * 0.5, 0]} color="#0d0704" rough={0.6} shadow={false} />
+                {[0.27, 0.5, 0.73].map((k) => (
+                    <React.Fragment key={k}>
+                        <Cyl r1={0.015} r2={0.015} h={0.14} pos={[-0.21, headLen * k, 0]} rot={[0, 0, Math.PI / 2]} color={brass} metal={0.7} rough={0.3} seg={10} />
+                        <Cyl r1={0.015} r2={0.015} h={0.14} pos={[0.21, headLen * k, 0]} rot={[0, 0, Math.PI / 2]} color={brass} metal={0.7} rough={0.3} seg={10} />
+                        <Sph r={0.03} pos={[-0.29, headLen * k, 0]} scale={[0.6, 1, 0.5]} color="#f0e6cc" rough={0.4} />
+                        <Sph r={0.03} pos={[0.29, headLen * k, 0]} scale={[0.6, 1, 0.5]} color="#f0e6cc" rough={0.4} />
+                    </React.Fragment>
+                ))}
+            </group>
+            {/* strings, from the saddle (58 mm spread) to the nut (43 mm spread) */}
             {[0, 1, 2, 3, 4, 5].map((i) => (
-                <Rod key={i} a={[-0.1 + i * 0.04, -0.49, 0.172]} b={[-0.055 + i * 0.022, 2.38, 0.148]} r={0.0035} color="#e8e6f2" />
+                <Rod key={i} a={[-0.115 + i * 0.046, G.saddleY, 0.172]} b={[-0.085 + i * 0.034, G.nutY, 0.153]} r={i < 3 ? 0.0045 : 0.0032} color={i < 3 ? '#e8dcc0' : '#f4f2fa'} />
             ))}
         </group>
     )
