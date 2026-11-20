@@ -59,6 +59,14 @@ export class Sky {
     t0 = 0
     /** Set while several objects share the view: the scenes then skip their own sky. */
     private noBg = false
+    /** When the journey arrived at each stop: every object plays its own animation from its start. */
+    private arrivedAt: number[] = STEPS.map(() => 0)
+    private lastStop = -1
+    /** Off-screen layer: a faded object is drawn there first, then laid down with its transparency
+     * (the scenes set their own opacity, so fading them from the outside would not hold). */
+    private layer = document.createElement('canvas')
+    private layerCtx: CanvasRenderingContext2D
+    private dpr = 1
     private streaks = Array.from({ length: 160 }, () => ({ a: rnd(0, TAU), d: rnd(0.02, 0.7), r: rnd(0.4, 1.3) }))
     readonly scenes: Array<(t: number) => void>
 
@@ -66,13 +74,17 @@ export class Sky {
         const ctx = canvas.getContext('2d')
         if (!ctx) throw new Error('Canvas 2D is not available')
         this.ctx = ctx
+        const layerCtx = this.layer.getContext('2d')
+        if (!layerCtx) throw new Error('Canvas 2D is not available')
+        this.layerCtx = layerCtx
         this.scenes = [this.pixelStar, this.globe, this.earthInside, this.launch, this.nebula, this.unknown].map((f) => f.bind(this))
     }
 
     resize() {
         const dpr = Math.min(2, window.devicePixelRatio || 1)
+        this.dpr = dpr
         this.S = this.canvas.clientWidth
-        this.canvas.width = this.canvas.height = Math.round(this.S * dpr)
+        this.canvas.width = this.canvas.height = this.layer.width = this.layer.height = Math.round(this.S * dpr)
         this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     }
 
@@ -156,12 +168,23 @@ export class Sky {
         ctx.globalAlpha = 1
     }
 
+    /** A new journey: every object will start its animation from the beginning again. */
+    resetJourney() {
+        this.lastStop = -1
+    }
+
     /**
      * The journey: stars rush past and the objects come from the depth, grow and pass by.
      * `pos` is a step index (fractional while travelling), `speed` in steps per second.
      */
     journey(t: number, pos: number, speed: number, dt: number) {
         const { ctx, S } = this
+        // the stop we are at starts its own clock when we reach it (the rocket must not have left already)
+        const stop = Math.max(0, Math.min(STEPS.length - 1, Math.round(pos)))
+        if (stop !== this.lastStop) {
+            this.lastStop = stop
+            this.arrivedAt[stop] = t
+        }
         ctx.fillStyle = '#03040a'
         ctx.fillRect(0, 0, S, S)
         ctx.strokeStyle = '#fff'
@@ -189,16 +212,35 @@ export class Sky {
             .forEach((i) => {
                 const d = i - pos
                 const scale = d >= 0 ? 1 / (1 + d * 2.4) : 1 - d * 2.6
-                const alpha = d >= 0 ? Math.min(1, (1.8 - d) / 0.6) : Math.max(0, 1 + d * 2)
-                ctx.save()
-                ctx.globalAlpha = alpha
-                ctx.translate(S / 2, S / 2)
-                ctx.scale(scale, scale)
-                ctx.translate(-S / 2, -S / 2)
+                // the next stop is only a faint glow in the distance, so it never clutters the current one
+                const alpha = d >= 0 ? Math.max(0, Math.min(1, 1 - d * 0.8)) : Math.max(0, 1 + d * 2)
+                if (alpha <= 0.01) return
+                const faded = alpha < 0.99
+                const target = faded ? this.layerCtx : ctx
+                if (faded) {
+                    target.setTransform(1, 0, 0, 1, 0, 0)
+                    target.clearRect(0, 0, this.layer.width, this.layer.height)
+                }
+                target.save()
+                target.setTransform(this.dpr, 0, 0, this.dpr, 0, 0)
+                target.translate(S / 2, S / 2)
+                target.scale(scale, scale)
+                target.translate(-S / 2, -S / 2)
+                // the scenes draw on this.ctx: point it at the layer while a faded object is drawn
+                this.ctx = target
                 this.noBg = true
-                this.scenes[i](t)
+                // objects still ahead wait at the start of their animation; the others run their own clock
+                this.scenes[i](i > stop ? 0 : t - this.arrivedAt[i])
                 this.noBg = false
-                ctx.restore()
+                this.ctx = ctx
+                target.restore()
+                if (faded) {
+                    ctx.save()
+                    ctx.setTransform(1, 0, 0, 1, 0, 0)
+                    ctx.globalAlpha = alpha
+                    ctx.drawImage(this.layer, 0, 0)
+                    ctx.restore()
+                }
             })
         ctx.globalAlpha = 1
     }

@@ -29,6 +29,13 @@ export const TELESCOPE_INTRO = {
   text: "I started with the interface. Since then, every time I understood one layer, I looked at the one behind it.",
 };
 
+/** What the telescope says before the journey starts: the beginning of the story. */
+export const TELESCOPE_LOG = [
+  "The first thing I ever built was a screen: a few pixels, a button, a page that answered back.",
+  "Then I got curious. What draws the map behind the page? What answers when you press the button? Where does it all go once it leaves my machine?",
+  "Every answer opened a new layer. This telescope follows them, stop by stop, from the first pixel to a sky I am still learning to read.",
+];
+
 export const TELESCOPE_STEPS: TelescopeStep[] = [
   {
     x: 24,

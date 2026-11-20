@@ -2,7 +2,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import clsx from 'clsx'
 import { BsArrowLeft, BsArrowRight, BsRocketTakeoff, BsStars } from 'react-icons/bs'
-import { TELESCOPE_INTRO, TELESCOPE_NOW, TELESCOPE_STATUS, TELESCOPE_STEPS as STEPS } from '../../../../lib/telescope'
+import { TELESCOPE_INTRO, TELESCOPE_LOG, TELESCOPE_NOW, TELESCOPE_STATUS, TELESCOPE_STEPS as STEPS } from '../../../../lib/telescope'
 import { Sky } from './sky'
 
 const LAST = STEPS.length - 1
@@ -55,6 +55,7 @@ export default function TelescopePanel({ onContact }: Props) {
         l.pos = i - 1.3
         l.target = i
         l.shown = i
+        skyRef.current?.resetJourney()
         setStep(i)
         setTravelling(true)
     }, [])
@@ -221,13 +222,8 @@ export default function TelescopePanel({ onContact }: Props) {
                 </div>
 
                 {!travelling ? (
-                    <>
-                        <button type="button" onClick={() => start(0)} className={glowBtn}>
-                            <BsRocketTakeoff aria-hidden="true" className="text-base" />
-                            Start the journey
-                        </button>
-                        <p className="text-center text-xs text-white/50">Six stops, at your own pace. Or click a star to go straight there.</p>
-                    </>
+                    // the logbook beside the eyepiece holds the two ways to set off
+                    <p className="text-center text-xs text-white/50">Six stops, at your own pace. Click a star to go straight there.</p>
                 ) : (
                     <>
                         {/* the route: where I am, where I've been, where I can go. Names sit above the dots,
@@ -300,44 +296,87 @@ export default function TelescopePanel({ onContact }: Props) {
             </div>
 
             <div className="flex flex-col gap-3 p-6">
-                <span className="text-xs uppercase tracking-[0.12em] text-indigo-300">Telescope · Next horizon</span>
-                <h3 className="text-2xl font-semibold leading-tight">{TELESCOPE_INTRO.title}</h3>
-                <p className="text-indigo-50/90">{TELESCOPE_INTRO.text}</p>
-
-                <div className="min-h-[10rem] rounded-xl border border-white/10 bg-[#0b0e1b] px-4 py-3.5" aria-live="polite">
-                    <p className="text-xs uppercase tracking-wider text-white/50">
-                        Stop {step + 1} / {STEPS.length}
-                        <span
-                            className={clsx(
-                                'ml-2 inline-block rounded-full px-2 py-px align-middle text-[11px] normal-case tracking-normal',
-                                s.status === 'done' && 'bg-indigo-900 text-indigo-200',
-                                s.status === 'now' && 'bg-amber-900 text-amber-200',
-                                s.status === 'next' && 'bg-cyan-900 text-cyan-200'
-                            )}
-                        >
-                            {TELESCOPE_STATUS[s.status]}
-                        </span>
-                    </p>
-                    <h4 className="mt-1 text-lg font-semibold">{s.title}</h4>
-                    <p className="mb-1.5 text-xs italic text-cyan-300">{s.object}</p>
-                    <p className="text-sm leading-relaxed text-indigo-50/90">{s.text}</p>
-                    {s.chips.length > 0 && (
-                        <ul className="mt-2 flex flex-wrap gap-1.5" aria-label="Technologies">
-                            {s.chips.map((c) => (
-                                <li key={c} className="rounded-full border border-white/15 px-2 py-px text-[11px] text-slate-300">
-                                    {c}
-                                </li>
+                {!travelling ? (
+                    // before the journey: the beginning of the story, like the first page of a logbook
+                    <>
+                        <span className="text-xs uppercase tracking-[0.12em] text-indigo-300">Telescope · Logbook</span>
+                        <h3 className="text-2xl font-semibold leading-tight">{TELESCOPE_INTRO.title}</h3>
+                        <div className="relative space-y-3 border-l border-indigo-300/25 pl-4">
+                            {TELESCOPE_LOG.map((line, i) => (
+                                <p key={i} className={clsx('leading-relaxed', i === TELESCOPE_LOG.length - 1 ? 'text-indigo-50' : 'text-indigo-50/75')}>
+                                    {line}
+                                </p>
                             ))}
-                        </ul>
-                    )}
-                </div>
+                        </div>
 
-                <div className="mt-auto pt-2">
-                    <button type="button" onClick={onContact} className={glowBtn}>
-                        Let&apos;s build what&apos;s next
-                        <BsArrowRight aria-hidden="true" className="transition group-hover:translate-x-0.5" />
-                    </button>
-                </div>
+                        <ul className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-white/60" aria-label="How to read the sky">
+                            <li className="flex items-center gap-1.5">
+                                <span aria-hidden="true" className="h-2 w-2 rounded-full bg-indigo-100" /> What I have learned
+                            </li>
+                            <li className="flex items-center gap-1.5">
+                                <span aria-hidden="true" className="h-2 w-2 rounded-full bg-amber-300 shadow-[0_0_8px_#fcd34d]" /> Where I am now
+                            </li>
+                            <li className="flex items-center gap-1.5">
+                                <span aria-hidden="true" className="h-2 w-2 rounded-full border border-dashed border-cyan-300" /> What comes next
+                            </li>
+                        </ul>
+
+                        <div className="mt-2 flex flex-wrap gap-3">
+                            <button type="button" onClick={() => start(0)} className={glowBtn}>
+                                <BsRocketTakeoff aria-hidden="true" className="text-base" />
+                                From the first pixel
+                            </button>
+                            <button type="button" onClick={() => start(TELESCOPE_NOW)} className={glassBtn}>
+                                <BsStars aria-hidden="true" />
+                                Straight to where I am now
+                            </button>
+                        </div>
+                    </>
+                ) : (
+                    <>
+                        <span className="text-xs uppercase tracking-[0.12em] text-indigo-300">Telescope · Next horizon</span>
+                        <h3 className="text-2xl font-semibold leading-tight">{TELESCOPE_INTRO.title}</h3>
+                        <p className="text-indigo-50/90">{TELESCOPE_INTRO.text}</p>
+
+                        <div className="min-h-[10rem] rounded-xl border border-white/10 bg-[#0b0e1b] px-4 py-3.5" aria-live="polite">
+                            <p className="text-xs uppercase tracking-wider text-white/50">
+                                Stop {step + 1} / {STEPS.length}
+                                <span
+                                    className={clsx(
+                                        'ml-2 inline-block rounded-full px-2 py-px align-middle text-[11px] normal-case tracking-normal',
+                                        s.status === 'done' && 'bg-indigo-900 text-indigo-200',
+                                        s.status === 'now' && 'bg-amber-900 text-amber-200',
+                                        s.status === 'next' && 'bg-cyan-900 text-cyan-200'
+                                    )}
+                                >
+                                    {TELESCOPE_STATUS[s.status]}
+                                </span>
+                            </p>
+                            <h4 className="mt-1 text-lg font-semibold">{s.title}</h4>
+                            <p className="mb-1.5 text-xs italic text-cyan-300">{s.object}</p>
+                            <p className="text-sm leading-relaxed text-indigo-50/90">{s.text}</p>
+                            {s.chips.length > 0 && (
+                                <ul className="mt-2 flex flex-wrap gap-1.5" aria-label="Technologies">
+                                    {s.chips.map((c) => (
+                                        <li key={c} className="rounded-full border border-white/15 px-2 py-px text-[11px] text-slate-300">
+                                            {c}
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
+                    </>
+                )}
+
+                {/* before the journey the only call is to set off; the invitation to talk comes along the way */}
+                {travelling && (
+                    <div className="mt-auto pt-2">
+                        <button type="button" onClick={onContact} className={glowBtn}>
+                            Let&apos;s build what&apos;s next
+                            <BsArrowRight aria-hidden="true" className="transition group-hover:translate-x-0.5" />
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     )
