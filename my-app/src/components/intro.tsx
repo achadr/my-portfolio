@@ -1,7 +1,8 @@
 "use client"
 
 import Image from 'next/image'
-import React from 'react'
+import React, { useEffect, useRef, useState } from 'react'
+import clsx from 'clsx'
 import ProfilePic from '../../public/me.png'
 import {motion} from "framer-motion"
 import Link from 'next/link'
@@ -13,7 +14,8 @@ import { profile } from '../../lib/content'
 import toast from 'react-hot-toast'
 import RoomLauncher from './room/RoomLauncher'
 import { useTour } from '../../context/tour'
-import { BsPlayFill } from 'react-icons/bs'
+import { BsCheck2, BsCopy, BsPlayFill } from 'react-icons/bs'
+import { HiOutlineMail } from 'react-icons/hi'
 
 export default function Intro() {
 
@@ -21,10 +23,17 @@ export default function Intro() {
     const { start: startTour } = useTour()
     const {ref} = useSectionInView("Home",0.5)
 
+    // "Copied" shows in the pill for a moment, then it goes back to "Copy"
+    const [copied, setCopied] = useState(false)
+    const copiedTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+    useEffect(() => () => clearTimeout(copiedTimer.current), [])
+
     const copyEmail = async () => {
         try {
             await navigator.clipboard.writeText(profile.email)
-            toast.success("Email copied")
+            setCopied(true)
+            clearTimeout(copiedTimer.current)
+            copiedTimer.current = setTimeout(() => setCopied(false), 2000)
         } catch {
             toast.error(`Copy failed. My email: ${profile.email}`)
         }
@@ -151,16 +160,31 @@ export default function Intro() {
             </button>
         </div>
 
-        <p className="mt-5 px-4 text-center text-sm text-gray-700">
-            {profile.email}{" "}
+        {/* the whole pill copies the address; the badge confirms it in place */}
+        <div className="mt-5 flex justify-center px-4">
             <button
                 type="button"
                 onClick={copyEmail}
-                className="ml-1 rounded-full border border-black/10 bg-white px-3 py-1 text-gray-800 transition hover:border-gray-900/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900"
+                aria-label={`Copy my email address: ${profile.email}`}
+                className="group inline-flex max-w-full items-center gap-2.5 rounded-full border border-black/10 bg-white/80 py-1.5 pl-4 pr-1.5 text-sm shadow-sm backdrop-blur transition hover:border-gray-900/30 hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900 active:scale-[0.98]"
             >
-                Copy
+                <HiOutlineMail aria-hidden="true" className="shrink-0 text-base text-gray-500" />
+                <span className="truncate font-medium text-gray-800">{profile.email}</span>
+                <span
+                    aria-hidden="true"
+                    className={clsx(
+                        'flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium transition-colors',
+                        copied ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-700 group-hover:bg-gray-900 group-hover:text-white'
+                    )}
+                >
+                    {copied ? <BsCheck2 /> : <BsCopy />}
+                    {copied ? 'Copied' : 'Copy'}
+                </span>
             </button>
-        </p>
+            <span role="status" className="sr-only">
+                {copied ? 'Email address copied' : ''}
+            </span>
+        </div>
     </section>
   )
 }

@@ -298,7 +298,8 @@ export default function CareerMap({ jumpTo }: Props) {
             <svg
                 viewBox={`0 0 ${MAP_W} ${MAP_H}`}
                 className="mx-auto h-auto w-full max-w-[22rem] rounded-xl border border-black/5 bg-white lg:mx-0 lg:max-w-none"
-                role="img"
+                // a group, not an image: the steps inside are buttons a screen reader must be able to reach
+                role="group"
                 aria-label="Schematic map of my career path from Rabat to France. The same steps are listed in the timeline view."
             >
                 {[-10, -5, 0, 5, 10, 15].map((lo) => (

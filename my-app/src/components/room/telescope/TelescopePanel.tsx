@@ -189,7 +189,8 @@ export default function TelescopePanel({ onContact }: Props) {
             <div className="flex flex-col items-center justify-center gap-4 border-b border-white/10 bg-[#080a14] px-4 py-6 md:border-b-0 md:border-r">
                 <div
                     ref={eyeRef}
-                    role="img"
+                    // a group, not an image: on the constellation it holds the stars, which are buttons
+                    role="group"
                     aria-label={travelling ? `Through the telescope: ${s.object}` : 'Through the telescope: the constellation of my path'}
                     className={clsx(
                         'relative aspect-square w-[min(400px,80vw)] touch-none select-none overflow-hidden rounded-full shadow-[0_0_0_8px_#1a1d2e,0_0_0_10px_#3b3f5c,inset_0_0_80px_#6366f144]',

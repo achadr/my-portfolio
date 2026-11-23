@@ -148,7 +148,7 @@ export default function ExplorerTabs() {
 
             <div ref={trackRef} className="-mx-4 mt-3 flex snap-x snap-mandatory gap-3 overflow-x-auto scroll-smooth px-4 pb-1 [scrollbar-width:none] motion-reduce:scroll-auto [&::-webkit-scrollbar]:hidden">
                 {TABS.map((t, i) => (
-                    <article
+                    <div
                         key={t.id}
                         role="tabpanel"
                         id={`${uid}-panel-${t.id}`}
@@ -183,7 +183,7 @@ export default function ExplorerTabs() {
                                 {t.action} <BsArrowRight aria-hidden="true" />
                             </button>
                         </div>
-                    </article>
+                    </div>
                 ))}
             </div>
 
