@@ -1,5 +1,5 @@
 "use client"
-import React, { useMemo } from 'react'
+import React, { useId, useMemo } from 'react'
 import ProfilePic from '../../../public/me.png'
 import { careerPath } from '../../../lib/content'
 import { LAND, MAP_W, project } from '../../../lib/geo'
@@ -57,10 +57,12 @@ export function MiniCareerMap() {
 export function MiniSkillTree() {
     const branches = useMemo(buildLayout, [])
     const { W, H, CX, CY } = TREE_VIEW
+    // the preview can be on the page twice (desktop card + phone tab): each copy needs its own clip id
+    const clipId = `xtree-avatar-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`
     return (
         <svg viewBox={`40 20 ${W - 80} ${H - 40}`} preserveAspectRatio="xMidYMid meet" className="h-full w-full" aria-hidden="true">
             <defs>
-                <clipPath id="xtree-avatar">
+                <clipPath id={clipId}>
                     <circle cx={CX} cy={CY} r={40} />
                 </clipPath>
             </defs>
@@ -88,7 +90,7 @@ export function MiniSkillTree() {
                     y={CY - 40}
                     width={80}
                     height={80}
-                    clipPath="url(#xtree-avatar)"
+                    clipPath={`url(#${clipId})`}
                     preserveAspectRatio="xMidYMid slice"
                 />
             </g>
