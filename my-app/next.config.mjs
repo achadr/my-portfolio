@@ -7,6 +7,11 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const nextConfig = {
     reactStrictMode: true,
     outputFileTracingRoot: path.join(__dirname, './'),
+    images: {
+        // every `quality` used by <Image>: 95 for my portrait, 75 for the project screenshots
+        // (Next 16 rejects qualities that are not listed here)
+        qualities: [75, 95],
+    },
     async headers() {
         return [
             {

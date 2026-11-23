@@ -6,6 +6,7 @@ import mcpHubImg from "../public/mcp-hub.png";
 import cvMakerImg from "../public/cv-maker.png";
 import cityAnalyzerImg from "../public/city-analyzer.png";
 import gitInsightsImg from "../public/git-insights.png";
+import ecg3dImg from "../public/ecg-3d.png";
 
 export const links = [
   {
@@ -52,24 +53,56 @@ export const experiencesData = [
     date: "2021 - 2024",
   },
   {
-    title: "Front-End Developer internships",
+    title: "Full-stack developer internship · Datascio",
     location: "Ile-de-France",
     description:
-      "I worked as a front-end developer for 1 year: 6 months at Orange, building an internal user interface for managers, and another 6 months as a full-stack developer building a POC for managing data using a pipeline for Datascio.",
+      "6-month internship as a full-stack developer, building a POC for managing data using a pipeline.",
     icon: React.createElement(CgWorkAlt),
+    date: "Mar 2020 - Sep 2020",
+  },
+  {
+    title: "Master's degree · IAE Rouen",
+    location: "Rouen",
+    description:
+      "Dual-competence master's degree.",
+    icon: React.createElement(LuGraduationCap),
     date: "2019 - 2020",
   },
   {
-    title: "Graduated INPT, IAE Rouen",
-    location: "Rabat, Rouen",
+    title: "Front-end developer internship · Orange",
+    location: "Arcueil",
     description:
-      "I obtained my engineering degree",
+      "6-month internship as a front-end developer, building an internal user interface for managers.",
+    icon: React.createElement(CgWorkAlt),
+    date: "Mar 2019 - Sep 2019",
+  },
+  {
+    title: "Erasmus exchange · Télécom SudParis",
+    location: "Évry",
+    description:
+      "Erasmus exchange at Télécom SudParis, during my engineering studies.",
     icon: React.createElement(LuGraduationCap),
-    date: "2019",
+    date: "2018 - 2019",
+  },
+  {
+    title: "Engineering degree · INPT",
+    location: "Rabat",
+    description:
+      "Engineering school. I obtained my engineering degree.",
+    icon: React.createElement(LuGraduationCap),
+    date: "2016 - 2019",
   },
 ] as const;
 
 export const projectsData = [
+  {
+    title: "ECG 3D Visualization",
+    description:
+      "Medical visualization prototype: a real-time 3D point cloud around a heart, with point selection and pinning, and a 500 Hz ECG monitor. One instanced mesh, tested with Vitest.",
+    tags: ["React", "TypeScript", "Three.js", "React Three Fiber", "uPlot", "Vitest"],
+    imageUrl: ecg3dImg,
+    url: "https://ecg-3d-visualization.vercel.app/",
+  },
   {
     title: "GitInsights",
     description:
@@ -123,5 +156,9 @@ export const skillsData = [
   "DeckGL",
   "Mapbox",
   "Recharts",
-  "D3.js"
+  "D3.js",
+  "Three.js",
+  "React Three Fiber",
+  "uPlot",
+  "Vitest"
 ] as const;

@@ -5,3 +5,64 @@
 html {
     --line-color: #e5e7eb
 }
+
+/* Animated background (see AnimatedBackground.tsx): opacity/transform only, GPU-friendly. */
+@keyframes bg-twinkle {
+    0%, 100% { opacity: 0.55; }
+    50% { opacity: 1; }
+}
+@keyframes bg-float {
+    0% { transform: translate3d(0, 0, 0) rotate(0deg) scale(1); opacity: 0; }
+    15% { opacity: 0.5; }
+    33% { transform: translate3d(0, -36vh, 0) rotate(calc(var(--rot) * 0.33)) scale(1.1); }
+    85% { opacity: 0.5; }
+    100% { transform: translate3d(0, -110vh, 0) rotate(var(--rot)) scale(0.3); opacity: 0; }
+}
+@keyframes bg-orb {
+    0%, 100% { opacity: 0.35; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(1.12); }
+}
+
+.bg-twinkle {
+    animation: bg-twinkle 4s ease-in-out infinite;
+    will-change: opacity;
+}
+.bg-float {
+    animation: bg-float 30s ease-in-out infinite both;
+    will-change: transform, opacity;
+}
+.bg-orb {
+    animation: bg-orb 16s ease-in-out infinite;
+    will-change: transform, opacity;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .bg-twinkle, .bg-float, .bg-orb { animation: none; }
+    .bg-float { opacity: 0; }
+}
+
+/* Explorer cards (ExplorerCards.tsx): hidden until their entrance starts, so they never flash.
+   Only when JavaScript runs (html.js); after 4 s they show anyway, in case the script fails. */
+@keyframes xcards-fallback {
+    to { opacity: 1; }
+}
+.js .xcards:not(.is-ready) .xcard {
+    opacity: 0;
+    animation: xcards-fallback 0.3s 4s forwards;
+}
+.xnode {
+    transform-box: fill-box;
+    transform-origin: center;
+}
+
+/* Guided tour (GuidedTour.tsx): the halo pulses gently around what to look at. */
+@keyframes tour-pulse {
+    0% { box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.45); }
+    100% { box-shadow: 0 0 0 14px rgba(251, 191, 36, 0); }
+}
+.tour-halo {
+    animation: tour-pulse 1.2s ease-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+    .tour-halo { animation: none; box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.35); }
+}
