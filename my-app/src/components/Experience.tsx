@@ -31,18 +31,17 @@ export default function Experience() {
         if (!focusRequest) return
         // When the 3D room is open it shows the career itself: leave the page behind it alone.
         if (document.querySelector('[data-room-overlay]')) return
-        const desktop = window.matchMedia('(min-width: 768px)').matches
-        const target = viewRef.current === 'map' && desktop
+        const target = viewRef.current === 'map'
             ? document.getElementById('experience')
             : document.getElementById(experienceAnchor(focusRequest.index))
         target?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }, [focusRequest])
   return (
-    <section ref={ref} id='experience' className='scroll-mt-28 mb-28 sm:mb-40 mt-5'>
+    <section ref={ref} id='experience' className='scroll-mt-28 mb-28 mt-5 w-full max-w-[53rem] sm:mb-40'>
         <SectionHeading>My Experience</SectionHeading>
 
-        {/* The map needs room: it is only offered from the md breakpoint up. */}
-        <div className='mb-6 hidden justify-center md:flex' role="group" aria-label="Experience display">
+        {/* Map or timeline, on every screen: on phones the map stacks above its controls and the step. */}
+        <div className='mb-6 flex justify-center' role="group" aria-label="Experience display">
             {(['map', 'timeline'] as const).map((mode) => (
                 <button
                     key={mode}
@@ -61,11 +60,11 @@ export default function Experience() {
             ))}
         </div>
 
-        <div className={clsx('hidden', view === 'map' && 'md:block')}>
+        <div className={clsx(view !== 'map' && 'hidden')}>
             <CareerMap jumpTo={focusRequest} />
         </div>
 
-        <div className={clsx(view === 'map' && 'md:hidden')}>
+        <div className={clsx(view === 'map' && 'hidden')}>
         <VerticalTimeline  lineColor='rgba(0, 0, 0, 0.15)'>
             {
                 experiencesData.map((experience,index) => (

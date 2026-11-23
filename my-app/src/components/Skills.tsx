@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react'
 
 import SectionHeading from './SectionHeading'
 import SkillsTree from './SkillsTree'
+import SkillsTreeMobile from './SkillsTreeMobile'
 import { skillGroups, type SkillName } from '../../lib/content'
 import {
     experiencesUsing,
@@ -51,8 +52,8 @@ export default function Skills() {
             Pick a skill to see where I used it.
         </p>
 
-        {/* The tree needs room: it is only offered from the md breakpoint up. */}
-        <div className='mb-6 hidden justify-center md:flex' role="group" aria-label="Skills display">
+        {/* Tree or list, on every screen: phones get a tree that zooms into one family at a time. */}
+        <div className='mb-6 flex justify-center' role="group" aria-label="Skills display">
             {(['tree', 'list'] as const).map((mode) => (
                 <button
                     key={mode}
@@ -71,11 +72,16 @@ export default function Skills() {
             ))}
         </div>
 
-        <div className={clsx('hidden', view === 'tree' && 'md:block')}>
-            <SkillsTree selected={selected} onSelect={setSelected} />
+        <div className={clsx(view !== 'tree' && 'hidden')}>
+            <div className='hidden md:block'>
+                <SkillsTree selected={selected} onSelect={setSelected} />
+            </div>
+            <div className='md:hidden'>
+                <SkillsTreeMobile selected={selected} onSelect={setSelected} />
+            </div>
         </div>
 
-        <div className={clsx('flex flex-col gap-8', view === 'tree' && 'md:hidden')}>
+        <div className={clsx('flex flex-col gap-8', view === 'tree' && 'hidden')}>
             {skillGroups.map((group, groupIndex) => (
                 <div key={group.id}>
                     <h3 className='text-lg font-semibold'>{group.name}</h3>
